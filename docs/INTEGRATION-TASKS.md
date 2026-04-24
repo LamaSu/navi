@@ -94,15 +94,16 @@ Every task below is a discrete slice. Owner + files + verify steps + deps + ETA.
 - **Verify:** `ghost fork <parent>` returns forked db url in <5s
 - **ETA:** 25 min
 
-### A5. Redis wrapper (`packages/backend/src/tools/redis.ts`)
+### A5. Redis wrapper (`packages/backend/src/tools/redis.ts` + `redis-cache.ts`)
 - **Credentials:** `REDIS_URL` (cloud.redis.io free tier, 30MB)
-- **Libs:** `redis`, `redisvl` (for vector), `@redis/agent-memory-server` client
-- **Use:**
-  - Vector search of capabilities (RedisVL)
-  - Agent Memory Server for conversation state
-  - Redis Streams (`a2a:intents:<enterprise_id>`) as a2a bus
-- **Verify:** `await redisClient.set("test", "1")` returns OK
-- **ETA:** 20 min
+- **Libs:** `redis`, `redisvl`, **Agent Memory Server via MCP** (config in `.mcp.json`)
+- **Three patterns wired:**
+  1. **Capability vector search** (RedisVL) — operator capabilities indexed for the demand-side finder
+  2. **Agent Memory Server (MCP)** — short + long-term memory for the meta-agent. `.mcp.json` already has `uvx --from agent-memory-server agent-memory mcp`. Generate `OPENAI_API_KEY` via existing CLI (user's request). Toggle `DISABLE_AUTH=true` for the demo.
+  3. **LangCache semantic caching** — `redis-cache.ts` wraps Nexla queries so "list machines for Oakland Titanium" the second time hits the cache. Cosine similarity ≥ 0.92 default. Stops us from blowing through Nexla call limits during the demo.
+- **a2a Streams:** `a2a:intents:<enterprise_id>` as the agent-to-agent bus
+- **Verify:** `await redisClient.set("test", "1")` returns OK; `cacheGet` returns hit on second identical query
+- **ETA:** 25 min
 
 ### A6. CDP + x402 wrapper (`packages/backend/src/tools/cdp-x402.ts`)
 - **Credentials:** `CDP_API_KEY_ID`, `CDP_API_KEY_SECRET`
@@ -199,12 +200,13 @@ Every task below is a discrete slice. Owner + files + verify steps + deps + ETA.
 - **Verify:** call the number, hear "Hi, I'm Operator Agent. What's your company name?"
 - **ETA:** 25 min
 
-### D3. Backend webhook handler (`packages/backend/src/routes/vapi.ts`)
+### D3. Backend webhook handler (`packages/backend/src/routes/vapi.ts`) — DONE (mock)
 - Handles Vapi `tool-calls` webhook: `function-call`, `status-update`, `end-of-call-report`
-- Maps tool calls to discovery state machine steps
-- Returns structured JSON to Vapi
-- **Verify:** test harness POSTs mock Vapi event, backend advances state
-- **ETA:** 20 min
+- **Plus a Task Runner endpoint** at `POST /vapi/task-runner` that polls Vapi REST for the latest ended call on `phoneNumberId=54a23043-6c89-48ab-a2b8-012747fc6516`, extracts the assistant's structured output, and runs the tasks (`ONBOARD_START` → `CONNECT_DATA_SOURCE` → `INGEST_DOCS` → `BUILD_AGENT` → `LIST_OPERATOR` → `LOCK_ESCROW` → `FIRE_FIRST_TASK` → `FOLLOW_UP`).
+- System prompt for the Task Runner agent: `apps/voice/TASK-RUNNER-PROMPT.md`
+- **Credentials:** `VAPI_PRIVATE_KEY` (saved to .env.local), `VAPI_PHONE_NUMBER_ID=54a23043...`
+- **Verify:** call the Vapi number → hang up → POST /vapi/task-runner returns full RunnerOutput with tasksExecuted
+- **ETA:** done
 
 ### D4. Demo script for voice
 - Dial number on stage → agent interviews → ends with "I'll text you the Guild URL"

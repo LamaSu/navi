@@ -1,20 +1,22 @@
 // Nexla data-integration wrapper.
-// Real implementation from scout-hotel research (ai/research/08-nexla.md).
-// 2-leg auth: SERVICE_KEY → bearer token (expires 1h). Then create credential →
-// source → destination → activate. InsForge Postgres is the sink.
-//
-// When MOCK_NEXLA=true we skip live calls so the pipeline works without a real key.
+// Auth flexibility (per scout-hotel research + 2026-04-24 hackathon credentials):
+//   • SESSION TOKEN (Bearer, JWT) — set NEXLA_SESSION_TOKEN. Used directly. What the user gave us today.
+//   • SERVICE KEY (Basic) — set NEXLA_SERVICE_KEY. We POST /token first to obtain a bearer.
+// We prefer SESSION_TOKEN when both are present.
 
 const MOCK = process.env.MOCK_NEXLA !== "false";
 const BASE = process.env.NEXLA_API_URL ?? "https://dataops.nexla.io/nexla-api";
+const SESSION_TOKEN = process.env.NEXLA_SESSION_TOKEN ?? "";
 const SERVICE_KEY = process.env.NEXLA_SERVICE_KEY ?? process.env.NEXLA_API_KEY ?? "";
 
 let cached: { token: string; exp: number } | null = null;
 
 async function getBearer(): Promise<string> {
+  if (SESSION_TOKEN) return SESSION_TOKEN;
+
   const now = Date.now();
   if (cached && cached.exp > now + 30_000) return cached.token;
-  if (!SERVICE_KEY) throw new Error("NEXLA_SERVICE_KEY not set");
+  if (!SERVICE_KEY) throw new Error("NEXLA_SESSION_TOKEN or NEXLA_SERVICE_KEY required");
 
   const res = await fetch(`${BASE}/token`, {
     method: "POST",
@@ -55,7 +57,7 @@ export async function createCredential(input: CredentialInput): Promise<{ id: nu
 
 interface SourceInput {
   name: string;
-  source_type: string; // postgres, mysql, snowflake, s3, sharepoint, rest, file_upload, ...
+  source_type: string;
   data_credentials_id?: number;
   source_config: Record<string, unknown>;
 }
@@ -91,10 +93,73 @@ export async function getSource(sourceId: number): Promise<{ status: string; id:
   return (await res.json()) as { status: string; id: number };
 }
 
+export async function listFlows(): Promise<{ flows: Array<{ id: number; name: string; runtime_status: string }> }> {
+  if (MOCK) return { flows: [] };
+  const res = await apiFetch("/flows");
+  return (await res.json()) as { flows: Array<{ id: number; name: string; runtime_status: string }> };
+}
+
 /**
- * Higher-level helper used by the onboarding flow. Given an enterprise URL
- * or ERP connection hint, creates a Nexla source → Nexset → InsForge sink
- * and activates the pipeline. Used by /onboard/:id/scrape.
+ * Express.dev-style natural-language pipeline build.
+ * The agent calls this with a one-line description; Nexla creates source +
+ * Nexset + sink and activates the flow. For the hackathon we drive this
+ * via the REST endpoints rather than express.dev directly so it composes
+ * with the rest of the meta-agent.
+ */
+export async function buildPipelineFromPrompt(input: {
+  session_id: string;
+  prompt: string;
+  source_url?: string;
+  source_type?: string; // postgres, mysql, snowflake, s3, sharepoint, rest, file_upload
+  insforge_postgres_url?: string;
+}): Promise<{ source_id: number; sink_id?: number; pipeline_status: string; nl_prompt: string }> {
+  if (MOCK) {
+    return {
+      source_id: Math.floor(Math.random() * 100000),
+      sink_id: Math.floor(Math.random() * 100000),
+      pipeline_status: "ACTIVE (mock)",
+      nl_prompt: input.prompt
+    };
+  }
+
+  // 1) credential for the source (REST URL by default)
+  const cred = await createCredential({
+    name: `enterprise-${input.session_id}-${input.source_type ?? "rest"}`,
+    credential_type: input.source_type ?? "rest",
+    credentials_non_secure_data: input.source_url ? { base_url: input.source_url } : {}
+  });
+
+  // 2) source
+  const src = await createSource({
+    name: `enterprise-src-${input.session_id}`,
+    source_type: input.source_type ?? "rest",
+    data_credentials_id: cred.id,
+    source_config: { path: "/", method: "GET", description: input.prompt }
+  });
+
+  // 3) optional sink to InsForge Postgres
+  let sink_id: number | undefined;
+  if (input.insforge_postgres_url) {
+    const sinkCred = await createCredential({
+      name: `enterprise-${input.session_id}-insforge-sink`,
+      credential_type: "postgres",
+      credentials_non_secure_data: { connection_url: input.insforge_postgres_url }
+    });
+    const sink = await createDestination({
+      name: `enterprise-sink-${input.session_id}`,
+      sink_type: "postgres",
+      data_credentials_id: sinkCred.id,
+      sink_config: { table_prefix: `ent_${input.session_id.slice(0, 8)}_` }
+    });
+    sink_id = sink.id;
+  }
+
+  await activateSource(src.id);
+  return { source_id: src.id, sink_id, pipeline_status: "ACTIVATING", nl_prompt: input.prompt };
+}
+
+/**
+ * Higher-level helper used by the onboarding flow (back-compat with previous wrapper).
  */
 export async function scrapeOrIngest(input: {
   session_id: string;
@@ -111,7 +176,7 @@ export async function scrapeOrIngest(input: {
         extracted: {
           name: "Oakland Titanium Mills",
           machines: [
-            { id: "mazak-i400", name: "Mazak i400", kind: "5-axis mill-turn" },
+            { id: "mazak-i400", name: "Mazak Integrex i-400", kind: "5-axis mill-turn" },
             { id: "haas-vf2ss", name: "Haas VF-2SS", kind: "3-axis mill" },
             { id: "dmg-nhx5000", name: "DMG Mori NHX 5000", kind: "HMC 6-pallet" }
           ],
@@ -122,22 +187,15 @@ export async function scrapeOrIngest(input: {
     };
   }
 
-  // REAL flow: REST source pointing at enterprise URL → file_upload destination
-  const cred = await createCredential({
-    name: `enterprise-${input.session_id}-rest`,
-    credential_type: "rest",
-    credentials_non_secure_data: { base_url: input.url }
+  const result = await buildPipelineFromPrompt({
+    session_id: input.session_id,
+    prompt: input.goal,
+    source_url: input.url,
+    source_type: "rest"
   });
-  const src = await createSource({
-    name: `enterprise-src-${input.session_id}`,
-    source_type: "rest",
-    data_credentials_id: cred.id,
-    source_config: { path: "/", method: "GET" }
-  });
-  await activateSource(src.id);
   return {
-    source_id: String(src.id),
-    dataflow_id: `nexla-df-${src.id}`,
-    preview: { status: "activated", note: "poll GET /data_sources/" + src.id }
+    source_id: String(result.source_id),
+    dataflow_id: `nexla-df-${result.source_id}`,
+    preview: { status: result.pipeline_status, nl_prompt: result.nl_prompt }
   };
 }

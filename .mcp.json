@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "uvx",
+      "args": ["--from", "agent-memory-server", "agent-memory", "mcp"],
+      "env": {
+        "DISABLE_AUTH": "true",
+        "REDIS_URL": "redis://localhost:6379",
+        "OPENAI_API_KEY": "<your-openai-key>"
+      }
+    }
+  }
+}

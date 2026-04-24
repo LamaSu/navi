@@ -10,6 +10,7 @@ import { signupInsforge } from "../tools/insforge.js";
 import { forkGhost } from "../tools/ghost.js";
 import { indexCapability } from "../tools/redis.js";
 import { generateEnterpriseAgent } from "./generate.js";
+import { publishToCited, geoQuestionFor } from "../tools/senso.js";
 
 const VAPI_BASE = process.env.VAPI_BASE_URL ?? "https://api.vapi.ai";
 const VAPI_KEY = process.env.VAPI_PRIVATE_KEY ?? "";
@@ -114,6 +115,29 @@ async function executeTask(t: VapiTask, ctxSessionId: { id: string | null }): Pr
         const agent = await generateEnterpriseAgent({ session, backend });
         await advanceSession(ctxSessionId.id, "built", { agent, backend });
         return { ok: true, result: { agent, backend } };
+      }
+      case "LIST_OPERATOR": {
+        if (!ctxSessionId.id) throw new Error("no session");
+        const session = await getSession(ctxSessionId.id);
+        if (!session) throw new Error("session vanished");
+        const profile = {
+          enterprise_id: session.id,
+          name: session.name,
+          url: session.url,
+          city: typeof (p as any).city === "string" ? (p as any).city : undefined,
+          capabilities: (session.capabilities ?? []).map((c) => c.label),
+          materials: Array.isArray((p as any).materials) ? ((p as any).materials as string[]) : [],
+          hours: typeof (p as any).hours === "string" ? (p as any).hours : undefined,
+          certifications: Array.isArray((p as any).certifications) ? ((p as any).certifications as string[]) : [],
+          agent_url: session.agent?.url,
+          marketplace_url: session.agent?.marketplace_url,
+          contact_email: session.contact_email
+        };
+        const cited = await publishToCited({
+          geo_question_id: geoQuestionFor(profile),
+          profile
+        });
+        return { ok: true, result: cited };
       }
       case "FOLLOW_UP":
         return { ok: true, result: { queued: t.blockingMissingInfo ?? [] } };

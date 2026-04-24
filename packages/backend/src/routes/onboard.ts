@@ -3,6 +3,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { startSession, getSession, advanceSession } from "../onboard/state.js";
 import { scrapeOrIngest } from "../tools/nexla.js";
+import { scrapeEnterpriseSite } from "../tools/tinyfish.js";
 import { signupInsforge } from "../tools/insforge.js";
 import { forkGhost } from "../tools/ghost.js";
 import { indexCapability } from "../tools/redis.js";
@@ -29,9 +30,14 @@ onboardRouter.post("/:id/scrape", async (req, res, next) => {
   try {
     const { id } = req.params;
     const { url, goal } = req.body as { url: string; goal?: string };
-    const result = await scrapeOrIngest({ session_id: id, url, goal: goal ?? "extract enterprise capabilities" });
-    await advanceSession(id, "data_connected", { nexla: result });
-    res.json(result);
+    // Run TinyFish + Nexla in parallel — TinyFish gives us a fast capability
+    // draft from the website, Nexla creates a real ingestion pipeline.
+    const [draft, pipeline] = await Promise.all([
+      scrapeEnterpriseSite(url).catch((e) => ({ error: String(e) })),
+      scrapeOrIngest({ session_id: id, url, goal: goal ?? "extract enterprise capabilities" })
+    ]);
+    await advanceSession(id, "data_connected", { tinyfish_draft: draft, nexla: pipeline });
+    res.json({ tinyfish_draft: draft, nexla: pipeline });
   } catch (e) { next(e); }
 });
 

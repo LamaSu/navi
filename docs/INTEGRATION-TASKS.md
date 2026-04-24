@@ -45,8 +45,13 @@ Every task below is a discrete slice. Owner + files + verify steps + deps + ETA.
 - **Research in flight:** scout-hotel → `ai/research/08-nexla.md` (SDK pattern, connector list, wrapper skeleton)
 - **ETA:** 25 min
 
-### A2b. TinyFish cookbook recipe (`packages/pcc-capability-finder/`) — BUYER-SIDE USER AGENT
-- **Role:** TinyFish is the **demand-side** agent. A buyer types a job description and our Next.js app runs a TinyFish agent to discover PCC operators that match, enriched with x402 quotes. Operators are NOT scraped by TinyFish — they're onboarded via Guild (see A/B/C tracks).
+### A2b. TinyFish — INTERNAL discovery tool for the operator agent (PRIMARY)
+- **Role:** TinyFish is now wrapped at `packages/backend/src/tools/tinyfish.ts` and called by `/onboard/:id/scrape` *in parallel* with Nexla. The meta-agent uses it to extract machines/hours/services from the enterprise's public website during discovery.
+- **Status:** WIRED — real SSE call behind `MOCK_TINYFISH=true`, key in .env.local works.
+- **Why this beats the buyer-side recipe:** keeps everything in one operator-side narrative; judges see TinyFish powering real onboarding, not a side demo.
+
+### A2c. TinyFish cookbook recipe (`packages/pcc-capability-finder/`) — DEFERRED (if-time)
+- **Role:** Originally proposed as a buyer-side demand-side recipe submitted to TinyFish's cookbook. **Deprioritized per user (2026-04-24 ~3:00 PM)** — operator side is the demo.
 - **Credentials:** `TINYFISH_API_KEY` from agent.tinyfish.ai/sign-up (500 cr/mo free)
 - **Status:** SCAFFOLD LANDED — renamed from `tinyfish-recipe` to `packages/pcc-capability-finder/`. Has Next.js + 7-section README + `/api/find` route doing SSE agent run + x402 enrichment + candidate list UI.
 - **Commands to deploy + PR:**

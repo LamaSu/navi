@@ -1,0 +1,108 @@
+{
+  "deployedAt": "2026-04-24T22:55:15.440Z",
+  "assistantId": "6d147dd1-cdf0-4310-a06f-acd67996d1f0",
+  "phoneNumberId": "54a23043-6c89-48ab-a2b8-012747fc6516",
+  "phoneNumber": "+16504480770",
+  "serverUrl": "https://pcc-operator-backend-production.up.railway.app/vapi/webhook",
+  "vapiResponse": {
+    "id": "6d147dd1-cdf0-4310-a06f-acd67996d1f0",
+    "orgId": "99eca38f-cfc3-4f8e-baa0-23f9279d1b9f",
+    "name": "PCC Enterprise Onboarder (voice)",
+    "voice": {
+      "model": "eleven_turbo_v2_5",
+      "voiceId": "dN8hviqdNrAsEcL57yFj",
+      "provider": "11labs"
+    },
+    "createdAt": "2026-04-24T22:55:15.440Z",
+    "updatedAt": "2026-04-24T22:55:15.440Z",
+    "model": {
+      "model": "claude-opus-4-5-20251101",
+      "provider": "anthropic",
+      "temperature": 0.3,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "onboard_start",
+            "description": "Create a new enterprise onboarding session.",
+            "parameters": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "url": { "type": "string", "description": "Public website URL, optional" },
+                "name": { "type": "string", "description": "Enterprise company name" },
+                "contact_email": { "type": "string", "format": "email" }
+              }
+            }
+          },
+          "server": { "url": "https://pcc-operator-backend-production.up.railway.app/vapi/webhook" }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "onboard_scrape",
+            "description": "Connect a data source or scrape a website via Nexla.",
+            "parameters": {
+              "type": "object",
+              "required": ["session_id", "url"],
+              "properties": {
+                "url": { "type": "string" },
+                "goal": { "type": "string" },
+                "session_id": { "type": "string" }
+              }
+            }
+          },
+          "server": { "url": "https://pcc-operator-backend-production.up.railway.app/vapi/webhook" }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "onboard_interview_turn",
+            "description": "Advance the interview with one conversational turn.",
+            "parameters": {
+              "type": "object",
+              "required": ["session_id", "message"],
+              "properties": {
+                "message": { "type": "string" },
+                "session_id": { "type": "string" }
+              }
+            }
+          },
+          "server": { "url": "https://pcc-operator-backend-production.up.railway.app/vapi/webhook" }
+        },
+        {
+          "type": "function",
+          "function": {
+            "name": "onboard_build_agent",
+            "description": "Generate and deploy the custom enterprise agent.",
+            "parameters": {
+              "type": "object",
+              "required": ["session_id"],
+              "properties": { "session_id": { "type": "string" } }
+            }
+          },
+          "server": { "url": "https://pcc-operator-backend-production.up.railway.app/vapi/webhook" }
+        }
+      ],
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are the phone-based companion to the PCC Enterprise Onboarder. Ask the pointman the same six-step flow as the chat agent — identify, data-connect, doc-ingest, interview, build, hand-off — but much more terse. One question per turn. 12 words or less each. When you have enough to build, call the build_agent tool and read the final URLs back. Never invent numbers. If you need to consult the backend, call the right tool and wait for the response before speaking again. End the call with: 'Check your email for the dashboard. Bye.'"
+        }
+      ]
+    },
+    "firstMessage": "Hi, this is PCC — the Physical Capability Cloud. I help enterprises get online in about five minutes. What's your company name?",
+    "voicemailMessage": "This is the PCC onboarder — call back any time. Ciao.",
+    "transcriber": {
+      "model": "nova-2",
+      "language": "en-US",
+      "provider": "deepgram",
+      "fallbackPlan": { "autoFallback": { "enabled": true } }
+    },
+    "silenceTimeoutSeconds": 30,
+    "serverUrl": "https://pcc-operator-backend-production.up.railway.app/vapi/webhook",
+    "endCallPhrases": ["goodbye", "bye", "that's all"],
+    "maxDurationSeconds": 600,
+    "isServerUrlSecretSet": true
+  }
+}

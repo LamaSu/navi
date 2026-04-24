@@ -28,14 +28,32 @@ Every task below is a discrete slice. Owner + files + verify steps + deps + ETA.
 - **Verify:** `curl localhost:3000/onboard/start` returns 201 with session_id
 - **ETA:** 25 min
 
-### A2. TinyFish wrapper (`packages/backend/src/tools/tinyfish.ts`)
-- **Credentials:** `TINYFISH_API_KEY`
-- **Endpoint:** `POST https://agent.tinyfish.ai/v1/automation/run-sse` with `{url, goal}`
-- **Returns:** SSE stream ending in `type=="COMPLETE"` with `resultJson`
-- **Use for:** scrape enterprise website → extract `{machines[], hours, contact, services}`
-- **Mock mode:** `MOCK_TINYFISH=true` returns fixture JSON so scaffolding works without key
-- **Verify:** `await scrapeEnterprise("https://fixtures/oakland-titanium.html")` returns parsed capability draft
-- **ETA:** 20 min
+### A2. Nexla wrapper (`packages/backend/src/tools/nexla.ts`) — DATA INTEGRATION LAYER
+- **Rationale:** rescoped to meta-agent. Nexla's 550+ connectors (ERP, CMMS, SharePoint, Salesforce, Snowflake, S3, PDFs, emails) + MCP server fit "connect enterprise data to PCC."
+- **Credentials:** `NEXLA_API_KEY` (15-day free trial: 5 sources, 1M records/day)
+- **Libs:** `pip install nexla-sdk` OR REST via `fetch`
+- **Use for:**
+  - Create data sources per enterprise (their ERP, CMMS, SharePoint, CSV inventory)
+  - Create dataflows → InsForge Postgres (so the enterprise agent sees normalized data)
+  - Nexla Context Engine for unstructured docs (SOPs, MOPs PDFs)
+- **Endpoints (REST):** `POST /sources`, `POST /dataflows`, `GET /sources/:id/status`, plus their MCP server at `mcp://nexla`
+- **Mock mode:** `MOCK_NEXLA=true` returns canned "Oakland Titanium connected to SharePoint" JSON
+- **Verify:** `await createDataflow({source:'sharepoint-oakland', dest:'insforge-enterprises'})` returns active dataflow_id
+- **Judges:** Mihir, Abhijit
+- **Research in flight:** scout-hotel → `ai/research/08-nexla.md` (SDK pattern, connector list, wrapper skeleton)
+- **ETA:** 25 min
+
+### A2b. TinyFish agent registration (`packages/tinyfish-agent/`) — PUBLISH OUR AGENT
+- **Role:** TinyFish is also a sponsor (Homer Wang judge). We're registering our Enterprise-Operator Agent AS a TinyFish web agent (publishing surface), not using them as a scraper.
+- **Credentials:** `TINYFISH_API_KEY` from tinyfish.ai signup (500 cr/mo free — for metered use of their platform)
+- **Expected paths (research in flight, scout-india → `ai/research/09-tinyfish-publish.md`):**
+  - Likely: fork `tinyfish-io/tinyfish-cookbook`, add `pcc-enterprise-onboarder/` recipe directory with README + example script + Vercel deploy config, open PR
+  - Possible: `@tiny-fish/cli publish` command
+  - Possible: web-form submission at tinyfish.ai/partners or similar
+- **What our recipe does:** takes an enterprise URL (or Nexla source id), runs our agent, returns PCC capability manifest — pitched as "onboard any enterprise to PCC in 90 seconds, powered by TinyFish browser infra where needed"
+- **Verify:** live Vercel demo URL + recipe landed in cookbook (PR or published listing)
+- **Judges:** Homer Wang
+- **ETA:** 25 min (wait for scout-india findings first, then 20 min of shaping)
 
 ### A3. InsForge wrapper (`packages/backend/src/tools/insforge.ts`)
 - **Credentials:** none for signup; gets `{accessApiKey, projectUrl, claimUrl}` back
@@ -247,6 +265,7 @@ Every task below is a discrete slice. Owner + files + verify steps + deps + ETA.
 | **Dev 3 — Web3/payments** | A6, B3, C1-C4, F2 | 90 min |
 | **Dev 4 — Voice** | D1, D2, D3, D4 | 65 min |
 | **Dev 5 — Demo + submission** | G1, G2, G3, F1, F3, E1(if time) | 90 min |
+| **Dev 6 — Sponsor publishing** | A2b (TinyFish recipe+publish), C4 (Guild publish), B3 agentic.market listing | 60 min |
 
 All five can start immediately in parallel. Tasks touching same package should commit-often and coordinate on slack.
 
@@ -259,7 +278,8 @@ All five can start immediately in parallel. Tasks touching same package should c
 ANTHROPIC_API_KEY=sk-ant-...
 
 # Sponsors — team members claim these
-TINYFISH_API_KEY=         # tinyfish.ai signup (500 credits/mo free)
+NEXLA_API_KEY=            # nexla.com 15-day trial (data integration layer)
+TINYFISH_API_KEY=         # tinyfish.ai signup (500 cr/mo free; used for publishing our recipe + metered scrape hooks)
 REDIS_URL=                # cloud.redis.io 30MB free
 CDP_API_KEY_ID=           # portal.cdp.coinbase.com
 CDP_API_KEY_SECRET=       # portal.cdp.coinbase.com
@@ -279,7 +299,7 @@ PCC_AGENT_PACKAGE_URL=https://capability.network/agent-package.json
 
 ## CRITICAL PATH (if we can only ship ONE thing)
 
-1. Backend `/onboard/*` + TinyFish + InsForge (A1, A2, A3)
+1. Backend `/onboard/*` + Nexla + InsForge (A1, A2, A3)
 2. Guild agent wrapping that backend (C1, C2, C3)
 3. Fixture website + demo script (G1, G2)
 4. Submission copy (G3)

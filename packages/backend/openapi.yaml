@@ -1,0 +1,209 @@
+openapi: 3.0.3
+info:
+  title: PCC Operator Backend
+  version: 0.1.0
+  description: |
+    Backend for the Ship to Prod hackathon Enterprise-Operator meta-agent.
+    Consumed by the Guild-hosted meta-agent as a custom integration —
+    each operation below becomes a `pcc_operator_backend_*` tool.
+servers:
+  - url: http://localhost:3000
+    description: Local dev
+  - url: https://pcc-operator-backend.fly.dev
+    description: Hackathon deploy (placeholder)
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Session:
+      type: object
+      required: [id, name, state, updated_at]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        url: { type: string, format: uri }
+        contact_email: { type: string, format: email }
+        state:
+          type: string
+          enum: [started, data_connected, docs_ingested, interview, capabilities_drafted, built]
+        capabilities: { type: array, items: { type: object } }
+        backend:
+          type: object
+          properties:
+            project_url: { type: string }
+            anon_key: { type: string }
+        agent:
+          type: object
+          properties:
+            url: { type: string }
+            marketplace_url: { type: string }
+        updated_at: { type: number }
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: Liveness check
+      responses: { "200": { description: ok } }
+  /onboard/start:
+    post:
+      operationId: onboard_start
+      summary: Begin a new enterprise onboarding session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, description: "Enterprise name — e.g. 'Oakland Titanium Mills'" }
+                url: { type: string, format: uri, description: "Public website for initial capability discovery" }
+                contact_email: { type: string, format: email }
+      responses:
+        "201":
+          description: session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id: { type: string }
+                  state: { type: string }
+  /onboard/{id}/scrape:
+    post:
+      operationId: onboard_scrape
+      summary: Connect an enterprise data source via Nexla (or scrape a website)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: { type: string, format: uri }
+                goal: { type: string, description: "Extraction goal — default 'extract enterprise capabilities'" }
+      responses:
+        "200":
+          description: source connected + draft returned
+          content: { application/json: { schema: { type: object } } }
+  /onboard/{id}/ingest-docs:
+    post:
+      operationId: onboard_ingest_docs
+      summary: Ingest SOP/MOP docs into a Ghost-forked verifier DB
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [doc_urls]
+              properties:
+                doc_urls:
+                  type: array
+                  items: { type: string, format: uri }
+      responses: { "200": { description: ok, content: { application/json: { schema: { type: object } } } } }
+  /onboard/{id}/interview-turn:
+    post:
+      operationId: onboard_interview_turn
+      summary: Advance the discovery interview with one conversational turn
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string }
+      responses:
+        "200":
+          description: state advanced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state: { type: string }
+                  assistant_reply: { type: string }
+  /onboard/{id}/build-agent:
+    post:
+      operationId: onboard_build_agent
+      summary: Generate + deploy the enterprise-specific PCC agent
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: agent built + deployed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agent:
+                    type: object
+                    properties:
+                      url: { type: string }
+                      marketplace_url: { type: string }
+                  backend:
+                    type: object
+                    properties:
+                      project_url: { type: string }
+                      anon_key: { type: string }
+  /onboard/{id}/status:
+    get:
+      operationId: onboard_status
+      summary: Fetch current onboarding session state
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Session" }
+  /jobs:
+    post:
+      operationId: jobs_create
+      summary: x402-gated job endpoint (returns 402 without payment)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enterprise_id, kind]
+              properties:
+                enterprise_id: { type: string }
+                kind: { type: string }
+                params: { type: object, additionalProperties: true }
+      responses:
+        "200":
+          description: job accepted
+        "402":
+          description: payment required (x402 handshake)

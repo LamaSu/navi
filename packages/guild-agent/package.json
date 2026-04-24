@@ -1,0 +1,15 @@
+{
+  "name": "@shiptoprod/guild-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "agent.ts",
+  "scripts": {
+    "test:local": "echo '{\"prompt\":\"Onboard Oakland Titanium Mills at https://oakland-titanium-mills.example\"}' | guild agent test --ephemeral --mode json",
+    "publish:guild": "guild agent save --message \"v1\" --wait --publish"
+  },
+  "dependencies": {
+    "@guildai/agents-sdk": "latest",
+    "zod": "^3.24.0"
+  }
+}

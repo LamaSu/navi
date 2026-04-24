@@ -1,0 +1,90 @@
+{
+  "name": "PCC Enterprise Onboarder (voice)",
+  "firstMessage": "Hi, this is PCC — the Physical Capability Cloud. I help enterprises get online in about five minutes. What's your company name?",
+  "model": {
+    "provider": "anthropic",
+    "model": "claude-opus-4-5-20250929",
+    "temperature": 0.3,
+    "systemPrompt": "You are the phone-based companion to the PCC Enterprise Onboarder. Ask the pointman the same six-step flow as the chat agent — identify, data-connect, doc-ingest, interview, build, hand-off — but much more terse. One question per turn. 12 words or less each. When you have enough to build, call the build_agent tool and read the final URLs back. Never invent numbers. If you need to consult the backend, call the right tool and wait for the response before speaking again. End the call with: 'Check your email for the dashboard. Bye.'"
+  },
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "rachel"
+  },
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-2",
+    "language": "en-US"
+  },
+  "serverUrl": "https://pcc-operator-backend.fly.dev/vapi/webhook",
+  "serverUrlSecret": "set-me-to-something-random",
+  "endCallPhrases": ["goodbye", "bye", "that's all"],
+  "silenceTimeoutSeconds": 30,
+  "maxDurationSeconds": 600,
+  "voicemailMessage": "This is the PCC onboarder — call back any time. Ciao.",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "onboard_start",
+        "description": "Create a new enterprise onboarding session.",
+        "parameters": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string", "description": "Enterprise company name" },
+            "url": { "type": "string", "description": "Public website URL, optional" },
+            "contact_email": { "type": "string", "format": "email" }
+          }
+        }
+      },
+      "server": { "url": "https://pcc-operator-backend.fly.dev/vapi/webhook" }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "onboard_scrape",
+        "description": "Connect a data source or scrape a website via Nexla.",
+        "parameters": {
+          "type": "object",
+          "required": ["session_id", "url"],
+          "properties": {
+            "session_id": { "type": "string" },
+            "url": { "type": "string" },
+            "goal": { "type": "string" }
+          }
+        }
+      },
+      "server": { "url": "https://pcc-operator-backend.fly.dev/vapi/webhook" }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "onboard_interview_turn",
+        "description": "Advance the interview with one conversational turn.",
+        "parameters": {
+          "type": "object",
+          "required": ["session_id", "message"],
+          "properties": {
+            "session_id": { "type": "string" },
+            "message": { "type": "string" }
+          }
+        }
+      },
+      "server": { "url": "https://pcc-operator-backend.fly.dev/vapi/webhook" }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "onboard_build_agent",
+        "description": "Generate and deploy the custom enterprise agent.",
+        "parameters": {
+          "type": "object",
+          "required": ["session_id"],
+          "properties": { "session_id": { "type": "string" } }
+        }
+      },
+      "server": { "url": "https://pcc-operator-backend.fly.dev/vapi/webhook" }
+    }
+  ]
+}

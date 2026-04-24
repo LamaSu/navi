@@ -1,0 +1,15 @@
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+coverage
+.turbo
+.next
+.vercel
+research-clones/
+ai/supervisor/dashboard.log
+ai/supervisor/threads/
+ai/supervisor/snapshots/

@@ -1,0 +1,28 @@
+{
+  "project": "shiptoprod-enterprise-operator-agent",
+  "context": "hackathon entry for Ship to Prod AI Hackathon (luma.com/shiptoprod), 2026-04-24",
+  "goal": "Win multiple tracks: Context Engineering Challenge (primary), Guild ($1K), Redis AI Incubator, TinyFish, InsForge, Chainguard, Ghost",
+  "pcc_related": true,
+  "pcc_repo": "C:\\Users\\globa\\physical-capability-cloud",
+  "lamasu_remote": true,
+  "stack_plan": "TypeScript + Node (for Guild/CopilotKit compat) + Redis (sponsor) + InsForge/Ghost backend (sponsor) + x402 escrow (PCC contracts)",
+  "test_cmd": "pnpm test",
+  "has_memory": false,
+  "tools_available": [
+    "chrome-tokens (for sponsor auth extraction)",
+    "camoufox (primary browser)",
+    "codesight",
+    "spark-run (DGX Spark offload)",
+    "mcp__claude_ai_Google_Drive (requires OAuth)"
+  ],
+  "tools_gaps_identified": [
+    "Google Docs write access (OAuth needed)",
+    "Guild CLI (need to npm install -g @guildai/cli)",
+    "Ghost CLI (need to curl install.ghost.build)",
+    "TinyFish credits/key",
+    "InsForge promo token",
+    "cited.md publishing mechanism"
+  ],
+  "intake_time": "2026-04-24T13:20:00Z",
+  "codesight_indexed": false
+}

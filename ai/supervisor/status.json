@@ -1,0 +1,34 @@
+{
+  "task": "Ship to Prod hackathon: win all tracks by building PCC Enterprise-Operator Agent that uses 3+ sponsors, publishes to cited.md, monetizes with x402",
+  "classification": "build+discover (hackathon)",
+  "started_at": "2026-04-24T13:20:00Z",
+  "updated_at": "2026-04-24T13:20:00Z",
+  "status": "running",
+  "current_phase": "Phase 3: Parallel Research",
+  "progress_pct": 10,
+  "phases": [
+    {"id": 0, "name": "Intake + Dashboard", "status": "completed", "started_at": "2026-04-24T13:19:00Z", "completed_at": "2026-04-24T13:20:30Z", "notes": "chrome-tokens: no docs.google.com auth; Guild/Redis sites found but no tokens yet"},
+    {"id": 1, "name": "Classification", "status": "completed", "started_at": "2026-04-24T13:20:30Z", "completed_at": "2026-04-24T13:20:40Z", "notes": "Classified as build+discover. Too broad for single wheel-scout; decomposed into 7 parallel research streams."},
+    {"id": 2, "name": "Wheel-Scout", "status": "skipped", "notes": "Hackathon integration task — sponsors ARE the wheels we must use. Landscape = sponsor list."},
+    {"id": 3, "name": "Parallel Research", "status": "running", "started_at": "2026-04-24T13:20:45Z", "notes": "7 research agents spawning"},
+    {"id": 4, "name": "Synthesis", "status": "pending"},
+    {"id": 5, "name": "Build + Google Doc Update", "status": "pending"},
+    {"id": 6, "name": "Integration + Checkpoint", "status": "pending"},
+    {"id": 7, "name": "Smoke Test", "status": "pending"}
+  ],
+  "agents": [],
+  "events": [
+    {"time": "2026-04-24T13:20:00Z", "type": "info", "message": "Pipeline started"},
+    {"time": "2026-04-24T13:20:30Z", "type": "info", "message": "Intake done: hackathon entry, no Google Docs auth, Spark available"},
+    {"time": "2026-04-24T13:20:40Z", "type": "decision", "message": "Classification = build+discover, skip wheel-scout (sponsors are forced adoption)"}
+  ],
+  "errors": [],
+  "decisions": [
+    "Working dir: C:\\Users\\globa\\shiptoprod-agent (new, will merge into PCC later)",
+    "Skip wheel-scout: sponsors are mandatory integrations, not candidate wheels",
+    "Google Doc: require user to authenticate via OAuth callback (MCP)"
+  ],
+  "budget": {"baseline_usd": 0, "api_equivalent_note": "on Max plan, flat subscription"},
+  "broadcast_cron_id": null,
+  "smoke_test": {"verdict": "pending"}
+}

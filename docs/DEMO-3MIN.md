@@ -65,31 +65,17 @@ Total: 3 minutes.
 >
 > *(stage hangs up)*
 
-> **[1:00 — 1:45] FAN-OUT — narrate the dashboard**
+> **[1:00 — 1:45] FAN-OUT — narrate the dashboard, framed by data lifespan**
 >
-> Behind that 30-second call, ten things just happened in parallel.
+> Behind that 30-second call, ten things fired in parallel.
 >
-> **Vapi** captured the call as structured intent — name, capabilities, schedule.
+> **Vapi** captured the call as structured intent. Our backend, on a **Chainguard** zero-CVE image, picked it up. A **TinyFish** agent scraped Oakland Titanium's site and pulled five CNC mills in eight seconds. **Nexla** built a live data pipeline — five-hundred-fifty connectors, structured systems any time they have one.
 >
-> Our backend, running on a **Chainguard** zero-CVE container, picked it up.
+> Then three storage layers, each at a different latency-times-durability point:
 >
-> A **TinyFish** agent scraped Oakland Titanium's website and pulled five CNC mills, hours, and contact in eight seconds.
+> **InsForge** is the operator's *books* — a sixty-second Postgres backend, auto-REST, OpenAI-compat Model Gateway. **Ghost** — Tiger Data Agentic Postgres — is the verifier's *scratchpad*: a copy-on-write fork per capture, indexed with **pgvectorscale**, discarded after the check. **Redis** is the agent's *nervous system* — vector match, Agent Memory Server, a2a Streams as the bus, all under a millisecond. Books, scratchpad, nervous system. Each one earns its keep.
 >
-> **Nexla** built a real data pipeline — REST source today, but the same flow takes Postgres ERPs, SharePoint, Salesforce — five-hundred-fifty connectors.
->
-> **InsForge** spun up a Postgres backend for Oakland Titanium in sixty seconds — auth, storage, auto-REST, an OpenAI-compatible model gateway. Zero OAuth dance.
->
-> **Ghost** — that's Tiger Data Agentic Postgres — forked a per-capture verifier database with **pgvectorscale** to index their SOPs.
->
-> **Redis** indexed the capability blurbs for vector search, ran an Agent Memory Server over MCP for conversation state, and emits to a Redis Stream as the agent-to-agent bus. Bonus: every Nexla call is wrapped in a LangCache semantic cache — second-time queries skip Nexla entirely.
->
-> **Coinbase Developer Platform** created a wallet for the new operator and faucet-funded it on Base Sepolia.
->
-> An **x402** middleware went live on the operator's `/jobs` endpoint with the Coinbase facilitator — first thousand transactions free.
->
-> They got listed on **agentic.market** for agent-to-agent discovery.
->
-> And **Senso** — the company behind cited.md — published Oakland Titanium's profile to cited.md so buyer agents can find them.
+> **Coinbase Developer Platform** minted a wallet on Base Sepolia. **x402** middleware went live on the operator's `/jobs` endpoint — Coinbase facilitator, thousand free transactions. They got listed on **agentic.market** for agent-to-agent discovery. And **Senso** published Oakland Titanium's profile to **cited.md** so buyer agents can find them.
 
 > **[1:45 — 2:30] PROOF TABS — flip browser tabs**
 >
@@ -146,3 +132,6 @@ That's **10 sponsors** in 3 minutes. The Context Engineering Challenge asks for 
 - **"What if their data isn't on the web?"** → "Nexla. Five-hundred-fifty connectors — Postgres, Salesforce, SharePoint, S3, you name it. The agent prompts the pointman for the connection string and Nexla owns the rest."
 - **"Why both Guild AND Vapi?"** → "Same backend, two doorways. Some pointmen prefer chat; some are walking the shop floor with a phone. The agent is the same agent."
 - **"Is this real or simulated?"** → "Real. The Senso profile is live, the Base Sepolia tx is on-chain, the InsForge backend has a public claim URL, the Vapi call is in their dashboard. Try it from your seat."
+- **"Isn't InsForge / Ghost / Redis the same thing? Three databases is a lot."** → "Different lifespans. InsForge holds the operator's *books* — durable, single-tenant, ACID, audit-trail forever. Ghost is the verifier's *scratchpad* — a copy-on-write Postgres fork *per capture*, kept for minutes, discarded after validation, so live operations are never mutated. Redis is the agent's *nervous system* — microsecond memory and the a2a Streams bus. You can't run verification in your operational DB without breaking audit. You can't run an agent's working state in Postgres without sub-millisecond latency. Three layers, three jobs."
+- **"Why both Redis vector and Ghost vector?"** → "Hot vs cold. Redis indexes capability *labels* for the agent's working loop — under a millisecond match. Ghost holds full SOP/MOP *documents* with pgvectorscale + BM25 — durable RAG over the operator's institutional knowledge. The architecture is set up to plumb Ghost into Redis as a tiered cache (LangCache pattern) — for the demo we kept them on parallel tracks because per-capture isolation doesn't fit a 'cache it' model."
+- **"Show me the new agent is actually alive."** → Open the operator dashboard at `https://pcc-operator-backend-production.up.railway.app/op?id=<session-id>` — capabilities, x402 endpoint, Redis stream tail, send-a-test-job button. Click the button → message lands in the bus → operator dashboard ticks `jobs_received: 1`.

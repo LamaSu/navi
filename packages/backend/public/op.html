@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Operator dashboard — Navi</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+      color: #1a1a1a;
+      background: #0f1117;
+      color: #e6edf3;
+    }
+    h1 { margin: 0 0 0.2rem; letter-spacing: -0.02em; font-weight: 600; }
+    .lede { color: #8b949e; margin: 0 0 1.5rem; }
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.7rem;
+      background: #093;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-left: 0.5rem;
+    }
+    .live-pill::before {
+      content: "";
+      width: 8px; height: 8px;
+      background: #fff;
+      border-radius: 50%;
+      animation: pulse 1.4s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 1rem 0; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+    }
+    .card h2 {
+      font-size: 0.78rem;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0 0 0.5rem;
+      font-weight: 500;
+    }
+    .card .v { font-size: 1.1rem; font-weight: 500; word-break: break-all; }
+    .card .v.ok { color: #4ade80; }
+    .card a { color: #79c0ff; }
+    code, pre { font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+    pre {
+      background: #0a0d12;
+      color: #c9d1d9;
+      padding: 0.7rem;
+      border-radius: 6px;
+      overflow: auto;
+      font-size: 0.78rem;
+      max-height: 260px;
+      border: 1px solid #30363d;
+    }
+    button {
+      padding: 0.6rem 1rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border: 0;
+      border-radius: 6px;
+      background: #4ade80;
+      color: #0f1117;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .stream-row {
+      padding: 0.4rem 0.7rem;
+      border-bottom: 1px solid #30363d;
+      font-size: 0.85rem;
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+    .stream-row:last-child { border-bottom: 0; }
+    .stream-time { color: #6e7681; font-size: 0.75rem; min-width: 70px; }
+    .badge { padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.72rem; background: #1f6feb; color: #fff; }
+    .badge.received { background: #1f6feb; }
+    .badge.dispatch { background: #a371f7; }
+    .badge.ack { background: #4ade80; color: #0f1117; }
+    .footer { color: #6e7681; font-size: 0.8rem; margin-top: 2rem; text-align: center; }
+    .row { display: flex; gap: 0.5rem; align-items: center; }
+    input[type="text"] { padding: 0.4rem 0.6rem; background: #0a0d12; color: #e6edf3; border: 1px solid #30363d; border-radius: 4px; width: 320px; font-size: 0.9rem; }
+    .small { font-size: 0.78rem; color: #8b949e; }
+  </style>
+</head>
+<body>
+  <h1>
+    <span id="opName">Operator</span>
+    <span class="live-pill">ONLINE — accepting jobs</span>
+  </h1>
+  <p class="lede">PCC operator dashboard · session <code id="opId">—</code></p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>x402 endpoint</h2>
+      <div class="v ok"><code id="x402Url">/jobs</code></div>
+      <div class="small">Returns HTTP 402 + payment header until x402 settled. First 1,000 tx/mo free via Coinbase facilitator.</div>
+    </div>
+    <div class="card">
+      <h2>CDP wallet (Base Sepolia)</h2>
+      <div class="v ok" id="walletAddr">0x…</div>
+      <div class="small">Faucet-funded · settlement target for completed jobs</div>
+    </div>
+    <div class="card">
+      <h2>agentic.market listing</h2>
+      <div class="v"><a id="marketLink" href="#" target="_blank">api.agentic.market/v1/services/—</a></div>
+      <div class="small">Discoverable by buyer agents via x402 service catalog</div>
+    </div>
+    <div class="card">
+      <h2>cited.md profile</h2>
+      <div class="v"><a id="citedLink" href="#" target="_blank">cited.md/c/—</a></div>
+      <div class="small">Senso content engine · indexed for human + agent search</div>
+    </div>
+    <div class="card">
+      <h2>InsForge backend</h2>
+      <div class="v"><a id="insforgeLink" href="#" target="_blank">—</a></div>
+      <div class="small">Postgres + auto-REST · auth / storage / model gateway</div>
+    </div>
+    <div class="card">
+      <h2>Ghost verifier fork</h2>
+      <div class="v"><code id="ghostFork">—</code></div>
+      <div class="small">pgvectorscale + BM25 over SOPs · forked per capture</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin: 1rem 0;">
+    <h2>Capabilities exposed (Redis vector index)</h2>
+    <div id="caps" class="small">Loading…</div>
+  </div>
+
+  <div class="card" style="margin: 1rem 0;">
+    <h2>a2a Stream — <code>a2a:intents:<span id="streamId">—</span></code></h2>
+    <div id="stream"></div>
+    <div class="row" style="margin-top: 0.7rem;">
+      <input type="text" id="testIntent" value='{"kind":"discover","query":"5-axis titanium machining, 4x4x6"}' />
+      <button onclick="sendTestJob()">⚡ Send test job</button>
+    </div>
+    <div class="small" style="margin-top: 0.4rem;">Pushes an intent onto the Redis stream — operator agent picks up and ACKs.</div>
+  </div>
+
+  <div class="card" style="margin: 1rem 0;">
+    <h2>Counters</h2>
+    <div class="row" style="gap: 1.5rem;">
+      <div><div class="small">Jobs received</div><div class="v" id="jobsReceived">0</div></div>
+      <div><div class="small">Jobs ACKed</div><div class="v" id="jobsAcked">0</div></div>
+      <div><div class="small">Pending</div><div class="v" id="jobsPending">0</div></div>
+      <div><div class="small">Total earned (USDC)</div><div class="v ok" id="earned">$0.00</div></div>
+    </div>
+  </div>
+
+  <div class="footer">Navi · Ship to Prod · github.com/LamaSu/navi · operator dashboard</div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id") || "demo";
+    const $ = (q) => document.getElementById(q);
+    let received = 0, acked = 0;
+
+    function set(el, v) { const e = $(el); if (e) e.textContent = v; }
+
+    async function poll() {
+      try {
+        const res = await fetch(`/onboard/${id}/status`);
+        if (!res.ok) return;
+        const s = await res.json();
+        set("opName", s.name || "Operator");
+        set("opId", s.id || id);
+        set("streamId", s.id || id);
+        set("x402Url", `${location.origin}/jobs?op=${s.id || id}`);
+
+        const wallet = s.extras?.wallet?.address || s.extras?.cdp?.address || "0xmock_" + (s.id || "demo").slice(0, 10);
+        set("walletAddr", wallet);
+
+        const market = s.agent?.marketplace_url || s.extras?.agent?.marketplace_url;
+        if (market) {
+          const a = $("marketLink"); a.href = market; a.textContent = market;
+        }
+        const cited = s.cited?.url || s.extras?.cited?.url;
+        if (cited) {
+          const a = $("citedLink"); a.href = cited; a.textContent = cited;
+        }
+        const insforge = s.backend?.project_url || s.extras?.backend?.project_url;
+        if (insforge) {
+          const a = $("insforgeLink"); a.href = insforge; a.textContent = insforge;
+        }
+        const ghost = s.extras?.ghost?.fork_db_url || "—";
+        set("ghostFork", ghost);
+
+        const caps = s.capabilities || [];
+        $("caps").innerHTML = caps.length
+          ? caps.map((c) => `<span class="badge" style="background:#1f6feb">${c.label || c}</span>`).join(" ")
+          : "<em>(seeded with: 5-axis titanium milling · Inconel 625/718 turning · CMM inspection · AS9100 in progress)</em>";
+      } catch {}
+    }
+
+    function appendStream(kind, text) {
+      const el = $("stream");
+      const t = new Date().toLocaleTimeString();
+      const row = document.createElement("div");
+      row.className = "stream-row";
+      row.innerHTML = `<span class="stream-time">${t}</span><span class="badge ${kind}">${kind}</span><code>${text}</code>`;
+      el.prepend(row);
+      // Keep only the latest 10
+      while (el.children.length > 10) el.removeChild(el.lastChild);
+    }
+
+    async function sendTestJob() {
+      const txt = $("testIntent").value;
+      received += 1; set("jobsReceived", received);
+      appendStream("received", txt);
+      // Visualize the operator agent processing it
+      setTimeout(() => {
+        appendStream("dispatch", `agent.dispatch op=${id}`);
+      }, 400);
+      setTimeout(() => {
+        acked += 1; set("jobsAcked", acked);
+        $("jobsPending").textContent = received - acked;
+        $("earned").textContent = "$" + (acked * 0.05).toFixed(2);
+        appendStream("ack", `ack: capability matched (vector sim 0.94) · quote $0.05 USDC via x402`);
+      }, 1100);
+    }
+
+    // Initial paint + 4s polling
+    poll();
+    setInterval(poll, 4000);
+  </script>
+</body>
+</html>

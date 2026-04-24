@@ -1,3 +1,5 @@
 packages:
-  - "packages/*"
-  - "apps/*"
+  - "packages/backend"
+  - "packages/pcc-capability-finder"
+  # packages/guild-agent excluded — initialized via `guild agent init`, not pnpm
+

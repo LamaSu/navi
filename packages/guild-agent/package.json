@@ -9,7 +9,7 @@
     "publish:guild": "guild agent save --message \"v1\" --wait --publish"
   },
   "dependencies": {
-    "@guildai/agents-sdk": "latest",
     "zod": "^3.24.0"
-  }
+  },
+  "comment": "Note: @guildai/agents-sdk is supplied by `guild setup` + `guild agent init --template LLM`, not via npm. The agent.ts file in this folder is copied INTO a guild-initialized project after running the Guild CLI bootstrap (see README.md for the sequence)."
 }

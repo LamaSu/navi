@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: Nexla Data Integration API
+  version: "1.0"
+  description: |
+    Subset of the Nexla REST API consumed by the PCC Enterprise-Operator
+    meta-agent. Each operation maps to a Guild tool: nexla_<operationId>.
+    Auth: Bearer session token (NEXLA_SESSION_TOKEN).
+servers:
+  - url: https://dataops.nexla.io/nexla-api
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Nexla session token (sub=_NX_API_)
+  schemas:
+    DataCredential:
+      type: object
+      required: [name, credential_type]
+      properties:
+        name: { type: string }
+        credential_type:
+          type: string
+          enum: [postgres, mysql, sqlserver, oracle, snowflake, redshift, bigquery, databricks, s3, gcs, sharepoint, gdrive, dropbox, box, kafka, rest, file_upload]
+        credentials_non_secure_data:
+          type: object
+          additionalProperties: true
+        credentials_secure_data:
+          type: object
+          additionalProperties: true
+    DataSource:
+      type: object
+      required: [name, source_type]
+      properties:
+        name: { type: string }
+        source_type:
+          type: string
+          enum: [postgres, mysql, sqlserver, oracle, snowflake, redshift, bigquery, databricks, s3, gcs, sharepoint, gdrive, dropbox, box, kafka, rest, file_upload]
+        data_credentials_id: { type: integer }
+        source_config:
+          type: object
+          additionalProperties: true
+    DataSink:
+      type: object
+      required: [name, sink_type, data_credentials_id]
+      properties:
+        name: { type: string }
+        sink_type: { type: string }
+        data_credentials_id: { type: integer }
+        sink_config:
+          type: object
+          additionalProperties: true
+paths:
+  /data_credentials:
+    post:
+      operationId: create_credential
+      summary: Create a credential for a data source or sink
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DataCredential" }
+      responses:
+        "200":
+          description: credential created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  name: { type: string }
+  /data_sources:
+    post:
+      operationId: create_source
+      summary: Create a data source (e.g., REST endpoint, Postgres, SharePoint)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DataSource" }
+      responses:
+        "200":
+          description: source created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  name: { type: string }
+                  status: { type: string }
+  /data_sources/{id}:
+    get:
+      operationId: get_source
+      summary: Fetch the current status and config of a data source
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: source detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  status: { type: string }
+                  runtime_status: { type: string }
+                  source_type: { type: string }
+  /data_sources/{id}/activate:
+    put:
+      operationId: activate_source
+      summary: Activate a data source — kicks off ingestion
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: activated
+          content: { application/json: { schema: { type: object } } }
+  /data_sinks:
+    post:
+      operationId: create_sink
+      summary: Create a data sink (destination) — e.g., Postgres for InsForge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DataSink" }
+      responses:
+        "200":
+          description: sink created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: integer }
+                  name: { type: string }
+  /flows:
+    get:
+      operationId: list_flows
+      summary: List all data flows accessible to the authenticated user
+      responses:
+        "200":
+          description: flow list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flows:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        name: { type: string }
+                        runtime_status: { type: string }
+                        flow_type: { type: string }

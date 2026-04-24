@@ -8,6 +8,7 @@ import { signupInsforge } from "../tools/insforge.js";
 import { forkGhost } from "../tools/ghost.js";
 import { indexCapability } from "../tools/redis.js";
 import { generateEnterpriseAgent } from "../onboard/generate.js";
+import { publishToCited, geoQuestionFor } from "../tools/senso.js";
 
 export const onboardRouter = Router();
 
@@ -70,8 +71,27 @@ onboardRouter.post("/:id/build-agent", async (req, res, next) => {
     const backend = await signupInsforge({ name: session.name });
     await indexCapability({ session_id: id, capabilities: session.capabilities ?? [] });
     const agent = await generateEnterpriseAgent({ session, backend });
-    await advanceSession(id, "built", { agent, backend });
-    res.json({ agent, backend });
+
+    // Publish operator profile to cited.md (Senso). Best-effort — failure here
+    // shouldn't block the rest of the build.
+    let cited: { content_id: string; url?: string } | { error: string };
+    try {
+      const profile = {
+        enterprise_id: session.id,
+        name: session.name,
+        url: session.url,
+        capabilities: (session.capabilities ?? []).map((c) => c.label),
+        agent_url: agent.url,
+        marketplace_url: agent.marketplace_url,
+        contact_email: session.contact_email
+      };
+      cited = await publishToCited({ geo_question_id: geoQuestionFor(profile), profile });
+    } catch (e) {
+      cited = { error: e instanceof Error ? e.message : String(e) };
+    }
+
+    await advanceSession(id, "built", { agent, backend, cited });
+    res.json({ agent, backend, cited });
   } catch (e) { next(e); }
 });
 

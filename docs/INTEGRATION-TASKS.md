@@ -43,17 +43,32 @@ Every task below is a discrete slice. Owner + files + verify steps + deps + ETA.
 - **Research in flight:** scout-hotel → `ai/research/08-nexla.md` (SDK pattern, connector list, wrapper skeleton)
 - **ETA:** 25 min
 
-### A2b. TinyFish agent registration (`packages/tinyfish-agent/`) — PUBLISH OUR AGENT
-- **Role:** TinyFish is also a sponsor (Homer Wang judge). We're registering our Enterprise-Operator Agent AS a TinyFish web agent (publishing surface), not using them as a scraper.
-- **Credentials:** `TINYFISH_API_KEY` from tinyfish.ai signup (500 cr/mo free — for metered use of their platform)
-- **Expected paths (research in flight, scout-india → `ai/research/09-tinyfish-publish.md`):**
-  - Likely: fork `tinyfish-io/tinyfish-cookbook`, add `pcc-enterprise-onboarder/` recipe directory with README + example script + Vercel deploy config, open PR
-  - Possible: `@tiny-fish/cli publish` command
-  - Possible: web-form submission at tinyfish.ai/partners or similar
-- **What our recipe does:** takes an enterprise URL (or Nexla source id), runs our agent, returns PCC capability manifest — pitched as "onboard any enterprise to PCC in 90 seconds, powered by TinyFish browser infra where needed"
-- **Verify:** live Vercel demo URL + recipe landed in cookbook (PR or published listing)
-- **Judges:** Homer Wang
-- **ETA:** 25 min (wait for scout-india findings first, then 20 min of shaping)
+### A2b. TinyFish cookbook recipe (`packages/tinyfish-recipe/`) — PUBLISH OUR AGENT
+- **Role:** scout-india confirmed: cookbook PR IS the registration mechanism. No separate `publish` command, no marketplace. Fork + folder + PR.
+- **Credentials:** `TINYFISH_API_KEY` from agent.tinyfish.ai/sign-up (500 cr/mo free, header `X-API-Key`)
+- **Status:** SCAFFOLD LANDED — `packages/tinyfish-recipe/` has Next.js skeleton, 7-section README, `/api/onboard` route calling TinyFish SSE agent, landing page. Template follows `silicon-signal` closest-pattern.
+- **Commands to deploy + PR:**
+  ```bash
+  cd packages/tinyfish-recipe
+  vercel deploy --prod                       # get live link
+  # back in a fresh clone for PR:
+  gh repo fork tinyfish-io/tinyfish-cookbook --clone
+  cd tinyfish-cookbook
+  cp -r ../shiptoprod-agent/packages/tinyfish-recipe ./pcc-enterprise-onboarder
+  git checkout -b globa/pcc-enterprise-onboarder
+  git add pcc-enterprise-onboarder && git commit -m "feat(pcc): enterprise onboarder recipe"
+  git push origin globa/pcc-enterprise-onboarder
+  gh pr create --title "PCC Enterprise Onboarder: on-chain capability escrow for industrial operators" --body-file pcc-enterprise-onboarder/README.md
+  ```
+- **Judge-appeal for Homer Wang** (from scout-india):
+  1. First B2B enterprise recipe (cookbook skews consumer)
+  2. Agents-calling-agents (our meta-agent calls TinyFish's agent)
+  3. Only recipe with on-chain primitives (MilestoneEscrow on Base Sepolia)
+  4. Parallel scraping across N enterprises (matches TinyFish signature pattern)
+  5. Live Vercel demo at 5 PM
+- **Bonus track**: publish `pcc-agent-mcp` to registry.modelcontextprotocol.io
+- **Verify:** deploy succeeds + PR opens + recipe at tinyfish-cookbook/pull/<N>
+- **ETA:** 20 min (scaffold done; needs Vercel deploy + PR open)
 
 ### A3. InsForge wrapper (`packages/backend/src/tools/insforge.ts`)
 - **Credentials:** none for signup; gets `{accessApiKey, projectUrl, claimUrl}` back

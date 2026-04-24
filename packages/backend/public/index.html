@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Navi — Enterprise Onboarding Console</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 4rem;
+      color: #1a1a1a;
+      background: #fafafa;
+    }
+    h1 { margin-bottom: 0.2rem; font-weight: 600; letter-spacing: -0.02em; }
+    .lede { color: #555; margin-top: 0; }
+    .phone {
+      display: inline-block;
+      padding: 0.4rem 0.8rem;
+      background: #111;
+      color: #fff;
+      border-radius: 6px;
+      font-family: ui-monospace, "SF Mono", monospace;
+      font-size: 0.95rem;
+      margin: 0.5rem 0 1.5rem;
+    }
+    section {
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin: 1rem 0;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+    }
+    section h2 {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #666;
+      margin-top: 0;
+      margin-bottom: 0.7rem;
+    }
+    label { font-size: 0.85rem; color: #666; display: block; margin-bottom: 0.3rem; }
+    input[type="text"], input[type="email"], input[type="url"], textarea, select {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      font-size: 0.95rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-family: inherit;
+      background: #fff;
+    }
+    textarea { font-family: ui-monospace, "SF Mono", monospace; font-size: 0.85rem; min-height: 88px; }
+    .row { display: flex; gap: 0.5rem; align-items: flex-end; }
+    .row > * { flex: 1; }
+    button {
+      padding: 0.55rem 1rem;
+      font-size: 0.92rem;
+      font-weight: 500;
+      border: 0;
+      border-radius: 6px;
+      background: #111;
+      color: #fff;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.ghost { background: #f0f0f0; color: #1a1a1a; border: 1px solid #ccc; }
+    .pill {
+      display: inline-block;
+      padding: 0.18rem 0.6rem;
+      font-size: 0.78rem;
+      border-radius: 999px;
+      background: #eef;
+      color: #335;
+      margin-left: 0.4rem;
+    }
+    pre {
+      background: #0f1117;
+      color: #c9d1d9;
+      padding: 0.8rem;
+      border-radius: 6px;
+      overflow: auto;
+      font-size: 0.78rem;
+      max-height: 220px;
+    }
+    .ok { color: #093; font-weight: 500; }
+    .err { color: #c00; }
+    footer { color: #888; font-size: 0.82rem; margin-top: 2rem; text-align: center; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>Navi — onboarding console</h1>
+  <p class="lede">Drop docs and connect data sources here while you're on the phone with the agent.</p>
+  <div class="phone">📞 +1 (650) 448-0770</div>
+
+  <section>
+    <h2>Session</h2>
+    <div class="row">
+      <div>
+        <label for="session">Session ID (matches your phone call)</label>
+        <input type="text" id="session" placeholder="paste session id from the agent, or click New" />
+      </div>
+      <button class="ghost" onclick="newSession()">New session</button>
+    </div>
+    <div class="row" style="margin-top: 0.6rem;">
+      <div>
+        <label for="company">Company name</label>
+        <input type="text" id="company" placeholder="Oakland Titanium Mills" />
+      </div>
+      <div>
+        <label for="email">Contact email</label>
+        <input type="email" id="email" placeholder="ops@example.com" />
+      </div>
+      <button onclick="startSession()">Start onboarding</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Website (TinyFish + Nexla scrape)</h2>
+    <div class="row">
+      <div>
+        <label for="url">Public website</label>
+        <input type="url" id="url" placeholder="https://your-company.example" />
+      </div>
+      <button onclick="scrapeNow()">Scrape now</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Documents — SOPs, MOPs, equipment manuals (Ghost / Tiger Data)</h2>
+    <label for="docs">Document URLs (one per line — PDF, public Drive link, anywhere reachable)</label>
+    <textarea id="docs" placeholder="https://drive.google.com/file/d/.../view&#10;https://your-company.example/handbook.pdf"></textarea>
+    <div style="margin-top: 0.5rem; text-align: right;">
+      <button onclick="ingestDocs()">Ingest into verifier DB</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Data source — connect ERP / CMMS / Salesforce / SharePoint (Nexla)</h2>
+    <div class="grid">
+      <div>
+        <label for="src_type">Source type</label>
+        <select id="src_type">
+          <option value="postgres">postgres</option>
+          <option value="mysql">mysql</option>
+          <option value="snowflake">snowflake</option>
+          <option value="sharepoint">sharepoint</option>
+          <option value="gdrive">gdrive</option>
+          <option value="s3">s3</option>
+          <option value="rest" selected>rest (any HTTP API)</option>
+          <option value="file_upload">file_upload</option>
+        </select>
+      </div>
+      <div>
+        <label for="src_url">Connection string / endpoint URL</label>
+        <input type="text" id="src_url" placeholder="postgres://user:pass@host/db  or  https://api.example.com" />
+      </div>
+    </div>
+    <div style="margin-top: 0.5rem; text-align: right;">
+      <button onclick="connectSource()">Connect via Nexla</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Build the agent (final step)</h2>
+    <p style="color:#555; font-size: 0.9rem; margin: 0 0 0.6rem;">When you're done feeding context, click below. The system spins InsForge backend, Redis vector index, CDP wallet, x402 endpoint, agentic.market listing, and publishes your profile to cited.md.</p>
+    <button onclick="buildAgent()" style="background: #093;">⚡ Build my PCC agent</button>
+  </section>
+
+  <section>
+    <h2>Status feed</h2>
+    <pre id="status">— idle. start a session above —</pre>
+    <div style="text-align: right; margin-top: 0.4rem;">
+      <button class="ghost" onclick="refreshStatus()">Refresh</button>
+      <span class="pill" id="autoPill">auto-refresh: on</span>
+    </div>
+  </section>
+
+  <footer>
+    Navi · Ship to Prod hackathon · April 24, 2026 · <a href="https://github.com/LamaSu/navi" target="_blank">github.com/LamaSu/navi</a>
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const log = (msg, klass = "") => {
+      const el = $("status");
+      const ts = new Date().toLocaleTimeString();
+      el.textContent = `[${ts}] ${msg}\n` + el.textContent;
+      if (klass) console.log(klass, msg);
+    };
+
+    function newSession() {
+      const id = (crypto.randomUUID && crypto.randomUUID()) || (Date.now() + "-" + Math.random().toString(36).slice(2, 10));
+      $("session").value = id;
+      log(`new session id: ${id}`);
+    }
+
+    async function startSession() {
+      const name = $("company").value.trim();
+      if (!name) { alert("company name required"); return; }
+      const body = { name, contact_email: $("email").value.trim() || undefined, url: $("url").value.trim() || undefined };
+      const res = await fetch("/onboard/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const j = await res.json();
+      if (!res.ok) { log("start failed: " + JSON.stringify(j), "err"); return; }
+      $("session").value = j.session_id;
+      log(`session ${j.session_id} started → ${j.state}`, "ok");
+    }
+
+    async function scrapeNow() {
+      const id = $("session").value.trim();
+      const url = $("url").value.trim();
+      if (!id || !url) { alert("session id + url required"); return; }
+      log(`scraping ${url} via TinyFish + Nexla...`);
+      const res = await fetch(`/onboard/${id}/scrape`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, goal: "extract enterprise capabilities" }) });
+      const j = await res.json();
+      if (!res.ok) { log("scrape failed: " + JSON.stringify(j), "err"); return; }
+      log("scrape ok: " + JSON.stringify(j).slice(0, 300), "ok");
+    }
+
+    async function ingestDocs() {
+      const id = $("session").value.trim();
+      const docs = $("docs").value.split("\n").map((s) => s.trim()).filter(Boolean);
+      if (!id || !docs.length) { alert("session id + at least one doc URL required"); return; }
+      log(`ingesting ${docs.length} doc(s) into Ghost fork...`);
+      const res = await fetch(`/onboard/${id}/ingest-docs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ doc_urls: docs }) });
+      const j = await res.json();
+      if (!res.ok) { log("ingest failed: " + JSON.stringify(j), "err"); return; }
+      log("docs ingested: " + JSON.stringify(j).slice(0, 300), "ok");
+    }
+
+    async function connectSource() {
+      const id = $("session").value.trim();
+      const url = $("src_url").value.trim();
+      const sourceType = $("src_type").value;
+      if (!id || !url) { alert("session id + connection string required"); return; }
+      log(`creating Nexla source (${sourceType})...`);
+      // Reuse /onboard/:id/scrape with the structured connection details.
+      const res = await fetch(`/onboard/${id}/scrape`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, goal: `connect ${sourceType} source` }) });
+      const j = await res.json();
+      if (!res.ok) { log("connect failed: " + JSON.stringify(j), "err"); return; }
+      log(`source connected: ${JSON.stringify(j).slice(0, 300)}`, "ok");
+    }
+
+    async function buildAgent() {
+      const id = $("session").value.trim();
+      if (!id) { alert("session id required"); return; }
+      log(`building agent for ${id}... fanning out 7 sponsors...`);
+      const res = await fetch(`/onboard/${id}/build-agent`, { method: "POST" });
+      const j = await res.json();
+      if (!res.ok) { log("build failed: " + JSON.stringify(j), "err"); return; }
+      log("BUILD COMPLETE", "ok");
+      log(JSON.stringify(j, null, 2).slice(0, 800), "ok");
+    }
+
+    async function refreshStatus() {
+      const id = $("session").value.trim();
+      if (!id) return;
+      try {
+        const res = await fetch(`/onboard/${id}/status`);
+        if (!res.ok) return;
+        const j = await res.json();
+        const summary = `state=${j.state} · capabilities=${(j.capabilities||[]).length} · agent=${j.agent?.url || "—"} · cited=${j.extras?.cited?.url || j.cited?.url || "—"}`;
+        log("status: " + summary);
+      } catch {}
+    }
+
+    // Auto-refresh every 3s when a session is set
+    setInterval(refreshStatus, 3000);
+
+    // pre-fill demo defaults
+    $("company").value = "Oakland Titanium Mills";
+    $("url").value = "https://oakland-titanium-mills.example";
+  </script>
+</body>
+</html>

@@ -1,34 +1,52 @@
 {
-  "task": "Ship to Prod hackathon: win all tracks by building PCC Enterprise-Operator Agent that uses 3+ sponsors, publishes to cited.md, monetizes with x402",
-  "classification": "build+discover (hackathon)",
+  "task": "Ship to Prod hackathon: meta-agent that helps enterprises build their own PCC agent. Use sponsors to win multiple tracks.",
+  "classification": "build+discover (hackathon, rescoped)",
   "started_at": "2026-04-24T13:20:00Z",
-  "updated_at": "2026-04-24T13:20:00Z",
+  "updated_at": "2026-04-24T13:49:00Z",
   "status": "running",
-  "current_phase": "Phase 3: Parallel Research",
-  "progress_pct": 10,
+  "current_phase": "Phase 4: Team Hand-off + Implementation Wave",
+  "progress_pct": 40,
   "phases": [
-    {"id": 0, "name": "Intake + Dashboard", "status": "completed", "started_at": "2026-04-24T13:19:00Z", "completed_at": "2026-04-24T13:20:30Z", "notes": "chrome-tokens: no docs.google.com auth; Guild/Redis sites found but no tokens yet"},
-    {"id": 1, "name": "Classification", "status": "completed", "started_at": "2026-04-24T13:20:30Z", "completed_at": "2026-04-24T13:20:40Z", "notes": "Classified as build+discover. Too broad for single wheel-scout; decomposed into 7 parallel research streams."},
-    {"id": 2, "name": "Wheel-Scout", "status": "skipped", "notes": "Hackathon integration task — sponsors ARE the wheels we must use. Landscape = sponsor list."},
-    {"id": 3, "name": "Parallel Research", "status": "running", "started_at": "2026-04-24T13:20:45Z", "notes": "7 research agents spawning"},
-    {"id": 4, "name": "Synthesis", "status": "pending"},
-    {"id": 5, "name": "Build + Google Doc Update", "status": "pending"},
-    {"id": 6, "name": "Integration + Checkpoint", "status": "pending"},
-    {"id": 7, "name": "Smoke Test", "status": "pending"}
+    {"id": 0, "name": "Intake + Dashboard", "status": "completed", "completed_at": "2026-04-24T13:20:30Z", "notes": "dashboard up :3457, Guild CLI installed, repos cloned"},
+    {"id": 1, "name": "Classification", "status": "completed", "completed_at": "2026-04-24T13:20:40Z", "notes": "build+discover rescoped to meta-agent factory"},
+    {"id": 2, "name": "Wheel-Scout", "status": "skipped", "notes": "sponsors are mandatory; landscape = sponsor list"},
+    {"id": 3, "name": "Parallel Research", "status": "completed", "completed_at": "2026-04-24T13:44:00Z", "notes": "7/7 scouts done: luma+judges, Guild, Redis+TinyFish, InsForge+Ghost, Chainguard, payment rails, PCC internal"},
+    {"id": 4, "name": "Team Hand-off + Impl", "status": "running", "started_at": "2026-04-24T13:44:00Z", "notes": "INTEGRATION-TASKS.md written; PLAN-V3 final; user rescoped to meta-agent + Vapi voice"},
+    {"id": 5, "name": "Integration + Checkpoint", "status": "pending"},
+    {"id": 6, "name": "Smoke Test", "status": "pending"}
   ],
-  "agents": [],
+  "agents": [
+    {"name": "scout-alpha", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "11 sponsors, 25+ judges, $45K pool, submit 4:30pm, demos 5pm"},
+    {"name": "scout-bravo", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "Guild = OpenAPI custom integration auto-generates tools; no external npm in agent code"},
+    {"name": "scout-charlie", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "Redis RedisVL+AMS+a2a-redis; TinyFish 500cr/mo free, SSE agent endpoint"},
+    {"name": "scout-delta", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "InsForge /agents/v1/signup 60s instant backend; Ghost = Tiger Data agentic Postgres 20+ MCP tools"},
+    {"name": "scout-echo", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "Chainguard cgr.dev base image + .npmrc Libraries + cgstart skill"},
+    {"name": "scout-foxtrot", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "x402+CDP+agentic.market OK; cited.md is Senso $2.5K/mo product — dropped"},
+    {"name": "scout-golf", "role": "Explore", "model": "sonnet", "status": "completed", "summary": "PCC: 27 packages, 34 a2a intents, 219 agent-package tools, 80+ routes"}
+  ],
   "events": [
     {"time": "2026-04-24T13:20:00Z", "type": "info", "message": "Pipeline started"},
-    {"time": "2026-04-24T13:20:30Z", "type": "info", "message": "Intake done: hackathon entry, no Google Docs auth, Spark available"},
-    {"time": "2026-04-24T13:20:40Z", "type": "decision", "message": "Classification = build+discover, skip wheel-scout (sponsors are forced adoption)"}
+    {"time": "2026-04-24T13:31:00Z", "type": "info", "message": "7 parallel scout agents spawned"},
+    {"time": "2026-04-24T13:44:00Z", "type": "phase_complete", "message": "All 7 scouts returned (Chainguard, Redis+TinyFish, InsForge+Ghost, payment rails, luma, PCC internal, Guild)"},
+    {"time": "2026-04-24T13:44:30Z", "type": "decision", "message": "Rescoped to meta-agent factory per user; Vapi voice added"},
+    {"time": "2026-04-24T13:45:00Z", "type": "decision", "message": "cited.md dropped; x402+agentic.market for monetization"},
+    {"time": "2026-04-24T13:49:00Z", "type": "info", "message": "INTEGRATION-TASKS.md written for team hand-off"}
   ],
   "errors": [],
   "decisions": [
-    "Working dir: C:\\Users\\globa\\shiptoprod-agent (new, will merge into PCC later)",
-    "Skip wheel-scout: sponsors are mandatory integrations, not candidate wheels",
-    "Google Doc: require user to authenticate via OAuth callback (MCP)"
+    "Working dir: C:\\Users\\globa\\shiptoprod-agent (new, standalone)",
+    "Skip wheel-scout: sponsors mandatory",
+    "Meta-agent architecture: 2-layer (Guild-thin + Node backend) due to Guild SDK constraints",
+    "Drop cited.md (Senso $2.5K/mo), keep x402+agentic.market",
+    "Add Vapi voice agent (user request 2026-04-24 13:48)",
+    "Demo via Guild chat OR Vapi phone; web UI is backup",
+    "Fake enterprise: Oakland Titanium Mills (fixture HTML)"
   ],
-  "budget": {"baseline_usd": 0, "api_equivalent_note": "on Max plan, flat subscription"},
-  "broadcast_cron_id": null,
+  "blockers": [
+    "Google Doc auth (user confirmed will /mcp)",
+    "Guild auth login (user action required)",
+    "CDP/TinyFish/Redis Cloud/Vapi API keys (user signup)"
+  ],
+  "broadcast_cron_id": "e2b0762c",
   "smoke_test": {"verdict": "pending"}
 }

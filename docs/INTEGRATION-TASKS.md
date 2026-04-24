@@ -5,8 +5,10 @@
 **Repo:** `C:\Users\globa\shiptoprod-agent\`
 **Plan:** `docs/PLAN-V3.md` (rescoped to **meta-agent that builds enterprise-specific PCC agents**)
 
-**Rescope (2026-04-24 user message):**
-> We're building an agent that helps an enterprise build **their own** PCC agent — discovers their databases, SOPs, MOPs, APIs, capabilities, parameters, availability, then generates + deploys the enterprise-specific agent that talks to PCC via a2a + x402.
+**Rescope (2026-04-24 user messages):**
+> (supply side) We're building an agent that helps an enterprise build **their own** PCC agent — discovers their databases, SOPs, MOPs, APIs, capabilities, parameters, availability, then generates + deploys the enterprise-specific agent that talks to PCC via a2a + x402. This meta-agent is **hosted on Guild**.
+>
+> (demand side) TinyFish hosts a **user agent** that buyers use to find PCC capabilities — not for operators. The Guild-hosted meta-agent handles supply side (enterprises onboarding); the TinyFish cookbook recipe handles demand side (buyers searching).
 
 Every task below is a discrete slice. Owner + files + verify steps + deps + ETA.
 
@@ -43,32 +45,31 @@ Every task below is a discrete slice. Owner + files + verify steps + deps + ETA.
 - **Research in flight:** scout-hotel → `ai/research/08-nexla.md` (SDK pattern, connector list, wrapper skeleton)
 - **ETA:** 25 min
 
-### A2b. TinyFish cookbook recipe (`packages/tinyfish-recipe/`) — PUBLISH OUR AGENT
-- **Role:** scout-india confirmed: cookbook PR IS the registration mechanism. No separate `publish` command, no marketplace. Fork + folder + PR.
-- **Credentials:** `TINYFISH_API_KEY` from agent.tinyfish.ai/sign-up (500 cr/mo free, header `X-API-Key`)
-- **Status:** SCAFFOLD LANDED — `packages/tinyfish-recipe/` has Next.js skeleton, 7-section README, `/api/onboard` route calling TinyFish SSE agent, landing page. Template follows `silicon-signal` closest-pattern.
+### A2b. TinyFish cookbook recipe (`packages/pcc-capability-finder/`) — BUYER-SIDE USER AGENT
+- **Role:** TinyFish is the **demand-side** agent. A buyer types a job description and our Next.js app runs a TinyFish agent to discover PCC operators that match, enriched with x402 quotes. Operators are NOT scraped by TinyFish — they're onboarded via Guild (see A/B/C tracks).
+- **Credentials:** `TINYFISH_API_KEY` from agent.tinyfish.ai/sign-up (500 cr/mo free)
+- **Status:** SCAFFOLD LANDED — renamed from `tinyfish-recipe` to `packages/pcc-capability-finder/`. Has Next.js + 7-section README + `/api/find` route doing SSE agent run + x402 enrichment + candidate list UI.
 - **Commands to deploy + PR:**
   ```bash
-  cd packages/tinyfish-recipe
+  cd packages/pcc-capability-finder
   vercel deploy --prod                       # get live link
-  # back in a fresh clone for PR:
   gh repo fork tinyfish-io/tinyfish-cookbook --clone
   cd tinyfish-cookbook
-  cp -r ../shiptoprod-agent/packages/tinyfish-recipe ./pcc-enterprise-onboarder
-  git checkout -b globa/pcc-enterprise-onboarder
-  git add pcc-enterprise-onboarder && git commit -m "feat(pcc): enterprise onboarder recipe"
-  git push origin globa/pcc-enterprise-onboarder
-  gh pr create --title "PCC Enterprise Onboarder: on-chain capability escrow for industrial operators" --body-file pcc-enterprise-onboarder/README.md
+  cp -r ../shiptoprod-agent/packages/pcc-capability-finder ./pcc-capability-finder
+  git checkout -b globa/pcc-capability-finder
+  git add pcc-capability-finder && git commit -m "feat(pcc): capability finder recipe"
+  git push origin globa/pcc-capability-finder
+  gh pr create --title "PCC Capability Finder: x402-quoted industrial capability matching" --body-file pcc-capability-finder/README.md
   ```
-- **Judge-appeal for Homer Wang** (from scout-india):
-  1. First B2B enterprise recipe (cookbook skews consumer)
-  2. Agents-calling-agents (our meta-agent calls TinyFish's agent)
-  3. Only recipe with on-chain primitives (MilestoneEscrow on Base Sepolia)
-  4. Parallel scraping across N enterprises (matches TinyFish signature pattern)
-  5. Live Vercel demo at 5 PM
+- **Judge-appeal for Homer Wang** (updated for demand-side framing):
+  1. First B2B matchmaking recipe in the cookbook (cookbook skews consumer)
+  2. Agents-calling-agents (buyer LLM → TinyFish → PCC operator agents)
+  3. First recipe with on-chain primitives via x402 quote headers (Base Sepolia)
+  4. Demonstrates TinyFish doing what it does best — live web discovery, no pre-built APIs
+  5. Completes a two-sided market story with our Guild-hosted supply-side agent
 - **Bonus track**: publish `pcc-agent-mcp` to registry.modelcontextprotocol.io
 - **Verify:** deploy succeeds + PR opens + recipe at tinyfish-cookbook/pull/<N>
-- **ETA:** 20 min (scaffold done; needs Vercel deploy + PR open)
+- **ETA:** 15 min (scaffold done; needs Vercel deploy + PR open)
 
 ### A3. InsForge wrapper (`packages/backend/src/tools/insforge.ts`)
 - **Credentials:** none for signup; gets `{accessApiKey, projectUrl, claimUrl}` back

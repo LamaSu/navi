@@ -3,279 +3,206 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Navi — Enterprise Onboarding Console</title>
+  <title>Navi — drop docs while on the phone</title>
   <style>
     * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      max-width: 880px;
-      margin: 0 auto;
-      padding: 1.5rem 1rem 4rem;
-      color: #1a1a1a;
-      background: #fafafa;
-    }
-    h1 { margin-bottom: 0.2rem; font-weight: 600; letter-spacing: -0.02em; }
-    .lede { color: #555; margin-top: 0; }
-    .phone {
-      display: inline-block;
-      padding: 0.4rem 0.8rem;
-      background: #111;
-      color: #fff;
-      border-radius: 6px;
-      font-family: ui-monospace, "SF Mono", monospace;
-      font-size: 0.95rem;
-      margin: 0.5rem 0 1.5rem;
-    }
-    section {
-      background: #fff;
-      border: 1px solid #e6e6e6;
-      border-radius: 10px;
-      padding: 1rem 1.2rem;
-      margin: 1rem 0;
-      box-shadow: 0 1px 0 rgba(0,0,0,0.02);
-    }
-    section h2 {
-      font-size: 0.95rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #666;
-      margin-top: 0;
-      margin-bottom: 0.7rem;
-    }
-    label { font-size: 0.85rem; color: #666; display: block; margin-bottom: 0.3rem; }
-    input[type="text"], input[type="email"], input[type="url"], textarea, select {
-      width: 100%;
-      padding: 0.55rem 0.7rem;
-      font-size: 0.95rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-family: inherit;
-      background: #fff;
-    }
-    textarea { font-family: ui-monospace, "SF Mono", monospace; font-size: 0.85rem; min-height: 88px; }
-    .row { display: flex; gap: 0.5rem; align-items: flex-end; }
-    .row > * { flex: 1; }
-    button {
-      padding: 0.55rem 1rem;
-      font-size: 0.92rem;
-      font-weight: 500;
-      border: 0;
-      border-radius: 6px;
-      background: #111;
-      color: #fff;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    button:hover { opacity: 0.85; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
-    button.ghost { background: #f0f0f0; color: #1a1a1a; border: 1px solid #ccc; }
-    .pill {
-      display: inline-block;
-      padding: 0.18rem 0.6rem;
-      font-size: 0.78rem;
-      border-radius: 999px;
-      background: #eef;
-      color: #335;
-      margin-left: 0.4rem;
-    }
-    pre {
-      background: #0f1117;
-      color: #c9d1d9;
-      padding: 0.8rem;
-      border-radius: 6px;
-      overflow: auto;
-      font-size: 0.78rem;
-      max-height: 220px;
-    }
-    .ok { color: #093; font-weight: 500; }
-    .err { color: #c00; }
-    footer { color: #888; font-size: 0.82rem; margin-top: 2rem; text-align: center; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: #fafafa; color: #1a1a1a; }
+    .wrap { max-width: 760px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
+    header { padding: 1rem 1.2rem; background: #fff; border-bottom: 1px solid #e6e6e6; display: flex; align-items: center; gap: 0.7rem; }
+    header h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+    .phone { font-family: ui-monospace, monospace; font-size: 0.9rem; padding: 0.3rem 0.6rem; background: #111; color: #fff; border-radius: 6px; }
+    .pulse { width: 8px; height: 8px; background: #093; border-radius: 50%; animation: p 1.4s infinite; display: inline-block; }
+    @keyframes p { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    main { flex: 1; overflow-y: auto; padding: 1rem 1.2rem; }
+    .msg { margin: 0.7rem 0; display: flex; gap: 0.5rem; max-width: 90%; }
+    .msg.bot { margin-right: auto; }
+    .msg.you { margin-left: auto; flex-direction: row-reverse; }
+    .bubble { padding: 0.6rem 0.85rem; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; white-space: pre-wrap; }
+    .msg.bot .bubble { background: #fff; border: 1px solid #e6e6e6; }
+    .msg.you .bubble { background: #111; color: #fff; }
+    .avatar { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: #4ade80; color: #0f1117; font-weight: 700; display: grid; place-items: center; font-size: 0.85rem; }
+    .msg.you .avatar { background: #111; color: #fff; }
+    .meta { font-size: 0.7rem; color: #999; margin-top: 0.2rem; }
+    .quick { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .quick button { font-size: 0.78rem; padding: 0.3rem 0.6rem; background: #f0f0f0; border: 1px solid #ddd; border-radius: 999px; cursor: pointer; }
+    .quick button:hover { background: #e8e8e8; }
+    footer { padding: 0.8rem 1.2rem; background: #fff; border-top: 1px solid #e6e6e6; }
+    .input-row { display: flex; gap: 0.5rem; align-items: end; }
+    textarea { flex: 1; resize: none; padding: 0.65rem 0.8rem; border: 1px solid #ccc; border-radius: 10px; font: inherit; font-size: 0.95rem; max-height: 120px; }
+    button.send { padding: 0.65rem 1.2rem; border: 0; border-radius: 10px; background: #111; color: #fff; cursor: pointer; font-weight: 500; }
+    button.send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .drop-hint { color: #888; font-size: 0.78rem; margin-top: 0.4rem; }
+    .drag-over { background: #f0fdf4 !important; border-color: #4ade80 !important; }
   </style>
 </head>
 <body>
-  <h1>Navi — onboarding console</h1>
-  <p class="lede">Drop docs and connect data sources here while you're on the phone with the agent.</p>
-  <div class="phone">📞 +1 (650) 448-0770</div>
-
-  <section>
-    <h2>Session</h2>
-    <div class="row">
-      <div>
-        <label for="session">Session ID (matches your phone call)</label>
-        <input type="text" id="session" placeholder="paste session id from the agent, or click New" />
+  <div class="wrap">
+    <header>
+      <span class="pulse"></span>
+      <h1>Navi · drop docs and connections</h1>
+      <span class="phone">📞 +1 (650) 448-0770</span>
+    </header>
+    <main id="thread"></main>
+    <footer>
+      <div class="input-row">
+        <textarea id="input" rows="1" placeholder="Type, paste a URL, or drop files…"></textarea>
+        <button class="send" id="send" onclick="onSend()">Send</button>
       </div>
-      <button class="ghost" onclick="newSession()">New session</button>
-    </div>
-    <div class="row" style="margin-top: 0.6rem;">
-      <div>
-        <label for="company">Company name</label>
-        <input type="text" id="company" placeholder="Oakland Titanium Mills" />
-      </div>
-      <div>
-        <label for="email">Contact email</label>
-        <input type="email" id="email" placeholder="ops@example.com" />
-      </div>
-      <button onclick="startSession()">Start onboarding</button>
-    </div>
-  </section>
-
-  <section>
-    <h2>Website (TinyFish + Nexla scrape)</h2>
-    <div class="row">
-      <div>
-        <label for="url">Public website</label>
-        <input type="url" id="url" placeholder="https://your-company.example" />
-      </div>
-      <button onclick="scrapeNow()">Scrape now</button>
-    </div>
-  </section>
-
-  <section>
-    <h2>Documents — SOPs, MOPs, equipment manuals (Ghost / Tiger Data)</h2>
-    <label for="docs">Document URLs (one per line — PDF, public Drive link, anywhere reachable)</label>
-    <textarea id="docs" placeholder="https://drive.google.com/file/d/.../view&#10;https://your-company.example/handbook.pdf"></textarea>
-    <div style="margin-top: 0.5rem; text-align: right;">
-      <button onclick="ingestDocs()">Ingest into verifier DB</button>
-    </div>
-  </section>
-
-  <section>
-    <h2>Data source — connect ERP / CMMS / Salesforce / SharePoint (Nexla)</h2>
-    <div class="grid">
-      <div>
-        <label for="src_type">Source type</label>
-        <select id="src_type">
-          <option value="postgres">postgres</option>
-          <option value="mysql">mysql</option>
-          <option value="snowflake">snowflake</option>
-          <option value="sharepoint">sharepoint</option>
-          <option value="gdrive">gdrive</option>
-          <option value="s3">s3</option>
-          <option value="rest" selected>rest (any HTTP API)</option>
-          <option value="file_upload">file_upload</option>
-        </select>
-      </div>
-      <div>
-        <label for="src_url">Connection string / endpoint URL</label>
-        <input type="text" id="src_url" placeholder="postgres://user:pass@host/db  or  https://api.example.com" />
-      </div>
-    </div>
-    <div style="margin-top: 0.5rem; text-align: right;">
-      <button onclick="connectSource()">Connect via Nexla</button>
-    </div>
-  </section>
-
-  <section>
-    <h2>Build the agent (final step)</h2>
-    <p style="color:#555; font-size: 0.9rem; margin: 0 0 0.6rem;">When you're done feeding context, click below. The system spins InsForge backend, Redis vector index, CDP wallet, x402 endpoint, agentic.market listing, and publishes your profile to cited.md.</p>
-    <button onclick="buildAgent()" style="background: #093;">⚡ Build my PCC agent</button>
-  </section>
-
-  <section>
-    <h2>Status feed</h2>
-    <pre id="status">— idle. start a session above —</pre>
-    <div style="text-align: right; margin-top: 0.4rem;">
-      <button class="ghost" onclick="refreshStatus()">Refresh</button>
-      <span class="pill" id="autoPill">auto-refresh: on</span>
-    </div>
-  </section>
-
-  <footer>
-    Navi · Ship to Prod hackathon · April 24, 2026 · <a href="https://github.com/LamaSu/navi" target="_blank">github.com/LamaSu/navi</a>
-  </footer>
-
+      <div class="drop-hint" id="drop-hint">drag PDFs / docs anywhere on the page · paste connection strings · I'll route them</div>
+    </footer>
+  </div>
   <script>
     const $ = (id) => document.getElementById(id);
-    const log = (msg, klass = "") => {
-      const el = $("status");
-      const ts = new Date().toLocaleTimeString();
-      el.textContent = `[${ts}] ${msg}\n` + el.textContent;
-      if (klass) console.log(klass, msg);
-    };
+    let sessionId = null;
+    let companyName = null;
 
-    function newSession() {
-      const id = (crypto.randomUUID && crypto.randomUUID()) || (Date.now() + "-" + Math.random().toString(36).slice(2, 10));
-      $("session").value = id;
-      log(`new session id: ${id}`);
+    function bubble(who, text, meta = "") {
+      const t = $("thread");
+      const div = document.createElement("div");
+      div.className = "msg " + who;
+      const avatar = who === "you" ? "U" : "N";
+      div.innerHTML = `<div class="avatar">${avatar}</div><div><div class="bubble"></div>${meta ? `<div class="meta">${meta}</div>` : ""}</div>`;
+      div.querySelector(".bubble").textContent = text;
+      t.appendChild(div);
+      t.scrollTop = t.scrollHeight;
+      return div;
+    }
+    function quick(opts) {
+      const t = $("thread");
+      const wrap = document.createElement("div");
+      wrap.className = "msg bot";
+      wrap.innerHTML = `<div class="avatar">N</div><div><div class="bubble"></div><div class="quick"></div></div>`;
+      const q = wrap.querySelector(".quick");
+      opts.forEach((o) => {
+        const b = document.createElement("button");
+        b.textContent = o.label;
+        b.onclick = () => { o.run(); wrap.querySelector(".quick").remove(); };
+        q.appendChild(b);
+      });
+      wrap.querySelector(".bubble").textContent = "Quick actions:";
+      t.appendChild(wrap);
+      t.scrollTop = t.scrollHeight;
     }
 
-    async function startSession() {
-      const name = $("company").value.trim();
-      if (!name) { alert("company name required"); return; }
-      const body = { name, contact_email: $("email").value.trim() || undefined, url: $("url").value.trim() || undefined };
-      const res = await fetch("/onboard/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    async function startSession(name, url) {
+      const res = await fetch("/onboard/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, url }) });
       const j = await res.json();
-      if (!res.ok) { log("start failed: " + JSON.stringify(j), "err"); return; }
-      $("session").value = j.session_id;
-      log(`session ${j.session_id} started → ${j.state}`, "ok");
+      sessionId = j.session_id;
+      companyName = name;
+      bubble("bot", `Got it — session ${sessionId.slice(0,8)} for ${name}. Open your operator dashboard while we work:`, `${location.origin}/op?id=${sessionId}`);
+      return j;
     }
 
-    async function scrapeNow() {
-      const id = $("session").value.trim();
-      const url = $("url").value.trim();
-      if (!id || !url) { alert("session id + url required"); return; }
-      log(`scraping ${url} via TinyFish + Nexla...`);
-      const res = await fetch(`/onboard/${id}/scrape`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, goal: "extract enterprise capabilities" }) });
+    async function scrapeUrl(url) {
+      bubble("bot", `Scraping ${url} via TinyFish + Nexla in parallel…`);
+      const res = await fetch(`/onboard/${sessionId}/scrape`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, goal: "extract enterprise capabilities" }) });
       const j = await res.json();
-      if (!res.ok) { log("scrape failed: " + JSON.stringify(j), "err"); return; }
-      log("scrape ok: " + JSON.stringify(j).slice(0, 300), "ok");
+      const draft = j?.tinyfish_draft || j;
+      const machines = (draft.machines || []).map((m) => `• ${m.name || m.kind || JSON.stringify(m)}`).join("\n");
+      bubble("bot", `Pulled:\n${machines || JSON.stringify(j).slice(0,400)}\n\nWant to add SOPs or connect a database next?`);
     }
 
-    async function ingestDocs() {
-      const id = $("session").value.trim();
-      const docs = $("docs").value.split("\n").map((s) => s.trim()).filter(Boolean);
-      if (!id || !docs.length) { alert("session id + at least one doc URL required"); return; }
-      log(`ingesting ${docs.length} doc(s) into Ghost fork...`);
-      const res = await fetch(`/onboard/${id}/ingest-docs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ doc_urls: docs }) });
+    async function ingestDocs(urls) {
+      bubble("bot", `Ingesting ${urls.length} doc(s) into Ghost forked verifier DB…`);
+      const res = await fetch(`/onboard/${sessionId}/ingest-docs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ doc_urls: urls }) });
       const j = await res.json();
-      if (!res.ok) { log("ingest failed: " + JSON.stringify(j), "err"); return; }
-      log("docs ingested: " + JSON.stringify(j).slice(0, 300), "ok");
-    }
-
-    async function connectSource() {
-      const id = $("session").value.trim();
-      const url = $("src_url").value.trim();
-      const sourceType = $("src_type").value;
-      if (!id || !url) { alert("session id + connection string required"); return; }
-      log(`creating Nexla source (${sourceType})...`);
-      // Reuse /onboard/:id/scrape with the structured connection details.
-      const res = await fetch(`/onboard/${id}/scrape`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, goal: `connect ${sourceType} source` }) });
-      const j = await res.json();
-      if (!res.ok) { log("connect failed: " + JSON.stringify(j), "err"); return; }
-      log(`source connected: ${JSON.stringify(j).slice(0, 300)}`, "ok");
+      bubble("bot", `Indexed ${j.indexed_docs ?? urls.length} docs · pgvectorscale + BM25.`);
     }
 
     async function buildAgent() {
-      const id = $("session").value.trim();
-      if (!id) { alert("session id required"); return; }
-      log(`building agent for ${id}... fanning out 7 sponsors...`);
-      const res = await fetch(`/onboard/${id}/build-agent`, { method: "POST" });
+      bubble("bot", `Building your PCC agent — fanning out 7 sponsor integrations in parallel. ~30s.`);
+      const res = await fetch(`/onboard/${sessionId}/build-agent`, { method: "POST" });
       const j = await res.json();
-      if (!res.ok) { log("build failed: " + JSON.stringify(j), "err"); return; }
-      log("BUILD COMPLETE", "ok");
-      log(JSON.stringify(j, null, 2).slice(0, 800), "ok");
+      bubble("bot",
+        `Done. Your agent is live.\n\n` +
+        `Operator dashboard: ${location.origin}/op?id=${sessionId}\n` +
+        `Guild: ${j.agent?.url ?? "—"}\n` +
+        `agentic.market: ${j.agent?.marketplace_url ?? "—"}\n` +
+        `cited.md: ${j.cited?.url ?? "—"}\n` +
+        `InsForge: ${j.backend?.project_url ?? "—"}`
+      );
     }
 
-    async function refreshStatus() {
-      const id = $("session").value.trim();
-      if (!id) return;
-      try {
-        const res = await fetch(`/onboard/${id}/status`);
-        if (!res.ok) return;
-        const j = await res.json();
-        const summary = `state=${j.state} · capabilities=${(j.capabilities||[]).length} · agent=${j.agent?.url || "—"} · cited=${j.extras?.cited?.url || j.cited?.url || "—"}`;
-        log("status: " + summary);
-      } catch {}
+    function looksLikeUrl(t) {
+      return /^https?:\/\//i.test(t.trim());
+    }
+    function looksLikeConnString(t) {
+      return /^(postgres|mysql|mongodb|redis|s3|sharepoint):\/\//i.test(t.trim()) || /sharepoint\.com|salesforce\.com|snowflakecomputing\.com/i.test(t);
     }
 
-    // Auto-refresh every 3s when a session is set
-    setInterval(refreshStatus, 3000);
+    async function onSend() {
+      const txt = $("input").value.trim();
+      if (!txt) return;
+      $("input").value = "";
+      bubble("you", txt);
 
-    // pre-fill demo defaults
-    $("company").value = "Oakland Titanium Mills";
-    $("url").value = "https://oakland-titanium-mills.example";
+      // Step 1: no session yet — first message is the company name
+      if (!sessionId) {
+        const m = txt.match(/^(.+?)\s+(?:at|@|—|-)\s+(https?:\/\/\S+)/i);
+        let name = txt, url = null;
+        if (m) { name = m[1]; url = m[2]; }
+        await startSession(name, url);
+        if (url) {
+          await scrapeUrl(url);
+        } else {
+          bubble("bot", "Drop your website URL next, or paste a connection string for your ERP / CMMS / SharePoint, or attach an SOP doc.");
+        }
+        return;
+      }
+
+      // Step 2+: route by content
+      const urls = txt.split(/\s+/).filter(looksLikeUrl);
+      if (urls.length && urls.some(looksLikeConnString)) {
+        bubble("bot", "Connection string detected — creating Nexla source…");
+        await scrapeUrl(urls[0]);
+        return;
+      }
+      if (urls.length === 1 && /\.pdf|\.docx|\.html?$|drive\.google\.com|sharepoint\.com/i.test(urls[0])) {
+        await ingestDocs(urls);
+        return;
+      }
+      if (urls.length === 1) {
+        await scrapeUrl(urls[0]);
+        return;
+      }
+      if (urls.length > 1) {
+        await ingestDocs(urls);
+        return;
+      }
+
+      // Plain text — show quick actions
+      if (/build|done|deploy|finish|go live|ship/i.test(txt)) {
+        await buildAgent();
+        return;
+      }
+
+      bubble("bot", `Noted. When you're ready I can build your agent — say "build" or paste any remaining docs/URLs.`);
+      quick([
+        { label: "⚡ Build my PCC agent", run: () => buildAgent() },
+        { label: "Open operator dashboard", run: () => window.open(`/op?id=${sessionId}`, "_blank") }
+      ]);
+    }
+
+    $("input").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
+    });
+
+    // Drag-and-drop docs (file names become document URLs by convention)
+    document.body.addEventListener("dragover", (e) => { e.preventDefault(); document.body.classList.add("drag-over"); });
+    document.body.addEventListener("dragleave", () => document.body.classList.remove("drag-over"));
+    document.body.addEventListener("drop", (e) => {
+      e.preventDefault();
+      document.body.classList.remove("drag-over");
+      const files = Array.from(e.dataTransfer.files);
+      if (!files.length) return;
+      bubble("you", files.map((f) => `📄 ${f.name}`).join("\n"));
+      if (!sessionId) { bubble("bot", "Tell me your company name first, then drop docs."); return; }
+      // For now we treat dropped filenames as URLs (best-effort) — real upload would PUT to InsForge storage
+      ingestDocs(files.map((f) => `local://${f.name}`));
+    });
+
+    // First contact
+    bubble("bot", "Hi — I'm Navi. While you're on the phone with the voice agent, drop docs and connections here. What's your company name? (e.g. \"Oakland Titanium Mills at https://oakland-titanium-mills.example\")");
   </script>
 </body>
 </html>

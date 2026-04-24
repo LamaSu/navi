@@ -3,242 +3,202 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Operator dashboard — Navi</title>
+  <title>Operator agent — accepting jobs</title>
   <style>
     * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 1.5rem 1rem;
-      color: #1a1a1a;
-      background: #0f1117;
-      color: #e6edf3;
-    }
-    h1 { margin: 0 0 0.2rem; letter-spacing: -0.02em; font-weight: 600; }
-    .lede { color: #8b949e; margin: 0 0 1.5rem; }
-    .live-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.25rem 0.7rem;
-      background: #093;
-      color: #fff;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      margin-left: 0.5rem;
-    }
-    .live-pill::before {
-      content: "";
-      width: 8px; height: 8px;
-      background: #fff;
-      border-radius: 50%;
-      animation: pulse 1.4s infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 1rem 0; }
-    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
-    .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 10px;
-      padding: 0.9rem 1rem;
-    }
-    .card h2 {
-      font-size: 0.78rem;
-      color: #8b949e;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin: 0 0 0.5rem;
-      font-weight: 500;
-    }
-    .card .v { font-size: 1.1rem; font-weight: 500; word-break: break-all; }
-    .card .v.ok { color: #4ade80; }
-    .card a { color: #79c0ff; }
-    code, pre { font-family: ui-monospace, "SF Mono", Consolas, monospace; }
-    pre {
-      background: #0a0d12;
-      color: #c9d1d9;
-      padding: 0.7rem;
-      border-radius: 6px;
-      overflow: auto;
-      font-size: 0.78rem;
-      max-height: 260px;
-      border: 1px solid #30363d;
-    }
-    button {
-      padding: 0.6rem 1rem;
-      font-size: 0.95rem;
-      font-weight: 500;
-      border: 0;
-      border-radius: 6px;
-      background: #4ade80;
-      color: #0f1117;
-      cursor: pointer;
-    }
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: #0f1117; color: #e6edf3; }
+    .wrap { max-width: 820px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    header { padding: 1.2rem 1.4rem; background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    header .name { font-weight: 600; font-size: 1.15rem; letter-spacing: -0.02em; }
+    header .sub { color: #8b949e; font-size: 0.85rem; }
+    .pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.7rem; background: #093; color: #fff; border-radius: 999px; font-size: 0.82rem; font-weight: 500; }
+    .pill::before { content: ""; width: 8px; height: 8px; background: #fff; border-radius: 50%; animation: p 1.4s infinite; }
+    @keyframes p { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .caps { padding: 1rem 1.4rem; border-bottom: 1px solid #30363d; }
+    .caps h2 { color: #8b949e; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.6rem; font-weight: 500; }
+    .badge { display: inline-block; padding: 0.3rem 0.65rem; background: #1f6feb; color: #fff; border-radius: 999px; font-size: 0.82rem; margin: 0.15rem; }
+    .badge.cert { background: #a371f7; }
+    .badge.mat { background: #f59e0b; color: #1a1a1a; }
+    main { flex: 1; padding: 1rem 1.4rem; overflow-y: auto; }
+    .msg { margin: 0.7rem 0; display: flex; gap: 0.5rem; max-width: 92%; }
+    .msg.agent { margin-right: auto; }
+    .msg.user { margin-left: auto; flex-direction: row-reverse; }
+    .avatar { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; background: #4ade80; color: #0f1117; font-weight: 700; display: grid; place-items: center; font-size: 0.78rem; }
+    .msg.user .avatar { background: #1f6feb; color: #fff; }
+    .bubble { padding: 0.6rem 0.85rem; border-radius: 12px; font-size: 0.95rem; line-height: 1.45; white-space: pre-wrap; }
+    .msg.agent .bubble { background: #161b22; border: 1px solid #30363d; }
+    .msg.user .bubble { background: #1f6feb; }
+    footer { padding: 0.9rem 1.4rem; background: #161b22; border-top: 1px solid #30363d; }
+    .field-row { display: flex; gap: 0.5rem; }
+    input, select { padding: 0.55rem 0.7rem; background: #0a0d12; color: #e6edf3; border: 1px solid #30363d; border-radius: 8px; font: inherit; font-size: 0.95rem; }
+    input:focus, select:focus { outline: 0; border-color: #58a6ff; }
+    input { flex: 1; }
+    button { padding: 0.55rem 1rem; background: #4ade80; color: #0f1117; border: 0; border-radius: 8px; font-weight: 600; cursor: pointer; }
     button:hover { opacity: 0.85; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
-    .stream-row {
-      padding: 0.4rem 0.7rem;
-      border-bottom: 1px solid #30363d;
-      font-size: 0.85rem;
-      display: flex;
-      gap: 0.6rem;
-      align-items: center;
-    }
-    .stream-row:last-child { border-bottom: 0; }
-    .stream-time { color: #6e7681; font-size: 0.75rem; min-width: 70px; }
-    .badge { padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.72rem; background: #1f6feb; color: #fff; }
-    .badge.received { background: #1f6feb; }
-    .badge.dispatch { background: #a371f7; }
-    .badge.ack { background: #4ade80; color: #0f1117; }
-    .footer { color: #6e7681; font-size: 0.8rem; margin-top: 2rem; text-align: center; }
-    .row { display: flex; gap: 0.5rem; align-items: center; }
-    input[type="text"] { padding: 0.4rem 0.6rem; background: #0a0d12; color: #e6edf3; border: 1px solid #30363d; border-radius: 4px; width: 320px; font-size: 0.9rem; }
     .small { font-size: 0.78rem; color: #8b949e; }
+    .quote { background: linear-gradient(135deg,#093, #4ade80); color: #0f1117; padding: 0.85rem 1rem; border-radius: 10px; font-weight: 500; }
+    code { background: #0a0d12; padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.85rem; }
+    .footer-info { padding: 0.7rem 1.4rem; color: #6e7681; font-size: 0.78rem; border-top: 1px solid #30363d; text-align: center; }
+    .footer-info a { color: #79c0ff; }
   </style>
 </head>
 <body>
-  <h1>
-    <span id="opName">Operator</span>
-    <span class="live-pill">ONLINE — accepting jobs</span>
-  </h1>
-  <p class="lede">PCC operator dashboard · session <code id="opId">—</code></p>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="name" id="opName">Operator agent</div>
+        <div class="sub">Physical Capability Cloud · session <code id="opId">—</code></div>
+      </div>
+      <span class="pill">ONLINE — accepting jobs</span>
+    </header>
 
-  <div class="grid">
-    <div class="card">
-      <h2>x402 endpoint</h2>
-      <div class="v ok"><code id="x402Url">/jobs</code></div>
-      <div class="small">Returns HTTP 402 + payment header until x402 settled. First 1,000 tx/mo free via Coinbase facilitator.</div>
+    <div class="caps">
+      <h2>Capabilities</h2>
+      <div id="caps"></div>
+      <h2 style="margin-top: 0.8rem;">Materials</h2>
+      <div id="mats"></div>
+      <h2 style="margin-top: 0.8rem;">Certifications</h2>
+      <div id="certs"></div>
     </div>
-    <div class="card">
-      <h2>CDP wallet (Base Sepolia)</h2>
-      <div class="v ok" id="walletAddr">0x…</div>
-      <div class="small">Faucet-funded · settlement target for completed jobs</div>
-    </div>
-    <div class="card">
-      <h2>agentic.market listing</h2>
-      <div class="v"><a id="marketLink" href="#" target="_blank">api.agentic.market/v1/services/—</a></div>
-      <div class="small">Discoverable by buyer agents via x402 service catalog</div>
-    </div>
-    <div class="card">
-      <h2>cited.md profile</h2>
-      <div class="v"><a id="citedLink" href="#" target="_blank">cited.md/c/—</a></div>
-      <div class="small">Senso content engine · indexed for human + agent search</div>
-    </div>
-    <div class="card">
-      <h2>InsForge backend</h2>
-      <div class="v"><a id="insforgeLink" href="#" target="_blank">—</a></div>
-      <div class="small">Postgres + auto-REST · auth / storage / model gateway</div>
-    </div>
-    <div class="card">
-      <h2>Ghost verifier fork</h2>
-      <div class="v"><code id="ghostFork">—</code></div>
-      <div class="small">pgvectorscale + BM25 over SOPs · forked per capture</div>
+
+    <main id="thread"></main>
+
+    <footer>
+      <div id="form-area"></div>
+    </footer>
+    <div class="footer-info">
+      x402 endpoint: <code id="x402">—</code> · CDP wallet: <code id="wallet">0xmock…</code> · cited.md: <a id="cited" href="#" target="_blank">profile</a> · agentic.market: <a id="market" href="#" target="_blank">listing</a>
     </div>
   </div>
-
-  <div class="card" style="margin: 1rem 0;">
-    <h2>Capabilities exposed (Redis vector index)</h2>
-    <div id="caps" class="small">Loading…</div>
-  </div>
-
-  <div class="card" style="margin: 1rem 0;">
-    <h2>a2a Stream — <code>a2a:intents:<span id="streamId">—</span></code></h2>
-    <div id="stream"></div>
-    <div class="row" style="margin-top: 0.7rem;">
-      <input type="text" id="testIntent" value='{"kind":"discover","query":"5-axis titanium machining, 4x4x6"}' />
-      <button onclick="sendTestJob()">⚡ Send test job</button>
-    </div>
-    <div class="small" style="margin-top: 0.4rem;">Pushes an intent onto the Redis stream — operator agent picks up and ACKs.</div>
-  </div>
-
-  <div class="card" style="margin: 1rem 0;">
-    <h2>Counters</h2>
-    <div class="row" style="gap: 1.5rem;">
-      <div><div class="small">Jobs received</div><div class="v" id="jobsReceived">0</div></div>
-      <div><div class="small">Jobs ACKed</div><div class="v" id="jobsAcked">0</div></div>
-      <div><div class="small">Pending</div><div class="v" id="jobsPending">0</div></div>
-      <div><div class="small">Total earned (USDC)</div><div class="v ok" id="earned">$0.00</div></div>
-    </div>
-  </div>
-
-  <div class="footer">Navi · Ship to Prod · github.com/LamaSu/navi · operator dashboard</div>
 
   <script>
     const params = new URLSearchParams(location.search);
     const id = params.get("id") || "demo";
     const $ = (q) => document.getElementById(q);
-    let received = 0, acked = 0;
+    let job = {};
+    let stage = 0;
 
-    function set(el, v) { const e = $(el); if (e) e.textContent = v; }
+    function bubble(who, text) {
+      const t = $("thread");
+      const div = document.createElement("div");
+      div.className = "msg " + who;
+      const avatar = who === "user" ? "U" : "A";
+      div.innerHTML = `<div class="avatar">${avatar}</div><div class="bubble"></div>`;
+      div.querySelector(".bubble").textContent = text;
+      t.appendChild(div);
+      t.scrollTop = t.scrollHeight;
+      return div;
+    }
+    function quote(html) {
+      const t = $("thread");
+      const div = document.createElement("div");
+      div.className = "msg agent";
+      div.innerHTML = `<div class="avatar">A</div><div class="quote"></div>`;
+      div.querySelector(".quote").innerHTML = html;
+      t.appendChild(div);
+      t.scrollTop = t.scrollHeight;
+    }
 
     async function poll() {
       try {
         const res = await fetch(`/onboard/${id}/status`);
         if (!res.ok) return;
         const s = await res.json();
-        set("opName", s.name || "Operator");
-        set("opId", s.id || id);
-        set("streamId", s.id || id);
-        set("x402Url", `${location.origin}/jobs?op=${s.id || id}`);
-
-        const wallet = s.extras?.wallet?.address || s.extras?.cdp?.address || "0xmock_" + (s.id || "demo").slice(0, 10);
-        set("walletAddr", wallet);
-
+        $("opName").textContent = s.name ? `${s.name} — operator agent` : "Operator agent";
+        $("opId").textContent = (s.id || id).slice(0, 8);
+        const x402 = `${location.origin}/jobs?op=${s.id || id}`;
+        $("x402").textContent = x402;
+        const w = s.extras?.wallet?.address || s.extras?.cdp?.address || ("0xmock_" + (s.id || id).slice(0, 10));
+        $("wallet").textContent = w;
         const market = s.agent?.marketplace_url || s.extras?.agent?.marketplace_url;
-        if (market) {
-          const a = $("marketLink"); a.href = market; a.textContent = market;
-        }
+        if (market) { $("market").href = market; $("market").textContent = market; }
         const cited = s.cited?.url || s.extras?.cited?.url;
-        if (cited) {
-          const a = $("citedLink"); a.href = cited; a.textContent = cited;
-        }
-        const insforge = s.backend?.project_url || s.extras?.backend?.project_url;
-        if (insforge) {
-          const a = $("insforgeLink"); a.href = insforge; a.textContent = insforge;
-        }
-        const ghost = s.extras?.ghost?.fork_db_url || "—";
-        set("ghostFork", ghost);
-
-        const caps = s.capabilities || [];
-        $("caps").innerHTML = caps.length
-          ? caps.map((c) => `<span class="badge" style="background:#1f6feb">${c.label || c}</span>`).join(" ")
-          : "<em>(seeded with: 5-axis titanium milling · Inconel 625/718 turning · CMM inspection · AS9100 in progress)</em>";
+        if (cited) { $("cited").href = cited; }
       } catch {}
     }
 
-    function appendStream(kind, text) {
-      const el = $("stream");
-      const t = new Date().toLocaleTimeString();
-      const row = document.createElement("div");
-      row.className = "stream-row";
-      row.innerHTML = `<span class="stream-time">${t}</span><span class="badge ${kind}">${kind}</span><code>${text}</code>`;
-      el.prepend(row);
-      // Keep only the latest 10
-      while (el.children.length > 10) el.removeChild(el.lastChild);
+    function renderCaps() {
+      // Pull from the session's capabilities, fall back to Oakland Titanium defaults for the demo
+      fetch(`/onboard/${id}/status`).then((r) => r.ok ? r.json() : null).then((s) => {
+        const caps = (s?.capabilities || []).map((c) => c.label || c);
+        const fallbackCaps = ["5-axis titanium milling", "Inconel 625/718 turning", "AS9100 first-article", "CMM inspection", "48-hour standard turnaround"];
+        const fallbackMats = ["Ti-6Al-4V", "Ti-6Al-4V ELI", "Inconel 625", "Inconel 718", "CP titanium"];
+        const fallbackCerts = ["AS9100 Rev D (in progress)", "ISO 9001:2015"];
+        $("caps").innerHTML = (caps.length ? caps : fallbackCaps).map((c) => `<span class="badge">${c}</span>`).join("");
+        $("mats").innerHTML = fallbackMats.map((m) => `<span class="badge mat">${m}</span>`).join("");
+        $("certs").innerHTML = fallbackCerts.map((c) => `<span class="badge cert">${c}</span>`).join("");
+      });
     }
 
-    async function sendTestJob() {
-      const txt = $("testIntent").value;
-      received += 1; set("jobsReceived", received);
-      appendStream("received", txt);
-      // Visualize the operator agent processing it
-      setTimeout(() => {
-        appendStream("dispatch", `agent.dispatch op=${id}`);
-      }, 400);
-      setTimeout(() => {
-        acked += 1; set("jobsAcked", acked);
-        $("jobsPending").textContent = received - acked;
-        $("earned").textContent = "$" + (acked * 0.05).toFixed(2);
-        appendStream("ack", `ack: capability matched (vector sim 0.94) · quote $0.05 USDC via x402`);
-      }, 1100);
+    function nextField() {
+      const fields = [
+        { key: "material", q: "What material? (e.g. Ti-6Al-4V)", type: "select", opts: ["Ti-6Al-4V","Ti-6Al-4V ELI","Inconel 625","Inconel 718","Other"] },
+        { key: "dims", q: "Part envelope? Length × width × height in inches.", type: "text", placeholder: "4 × 4 × 6" },
+        { key: "qty", q: "How many?", type: "text", placeholder: "12" },
+        { key: "deadline", q: "When do you need it?", type: "text", placeholder: "by Tuesday" },
+        { key: "tolerance", q: "Tolerance class?", type: "select", opts: ["±0.005\" general","±0.001\" precision","±0.0005\" tight","aerospace AS9100"] }
+      ];
+      if (stage >= fields.length) {
+        finalize();
+        return;
+      }
+      const f = fields[stage];
+      bubble("agent", f.q);
+      const a = $("form-area");
+      if (f.type === "select") {
+        a.innerHTML = `<div class="field-row"><select id="answer">${f.opts.map((o) => `<option>${o}</option>`).join("")}</select><button onclick="submitAnswer()">Send</button></div>`;
+      } else {
+        a.innerHTML = `<div class="field-row"><input id="answer" type="text" placeholder="${f.placeholder}" /><button onclick="submitAnswer()">Send</button></div>`;
+      }
+      $("answer").focus();
+      $("answer").addEventListener("keydown", (e) => { if (e.key === "Enter") submitAnswer(); });
     }
 
-    // Initial paint + 4s polling
+    window.submitAnswer = function () {
+      const v = $("answer").value.trim();
+      if (!v) return;
+      const fieldKeys = ["material","dims","qty","deadline","tolerance"];
+      job[fieldKeys[stage]] = v;
+      bubble("user", v);
+      stage++;
+      $("form-area").innerHTML = "";
+      setTimeout(nextField, 250);
+    };
+
+    function finalize() {
+      bubble("agent", "Got it. Checking capacity, materials, and lead time against current schedule…");
+      setTimeout(() => {
+        // mock a price: dims size factor + qty + tolerance multiplier + material multiplier
+        const qty = parseInt(job.qty) || 1;
+        const tol = job.tolerance.includes("aerospace") ? 1.6 : job.tolerance.includes("tight") ? 1.4 : job.tolerance.includes("precision") ? 1.2 : 1;
+        const mat = job.material.includes("Inconel") ? 1.5 : 1;
+        const unit = Math.round(220 * tol * mat);
+        const total = unit * qty;
+        const eta = job.deadline.toLowerCase().includes("tuesday") || job.deadline.toLowerCase().includes("rush") ? "48 hours" : "5–7 business days";
+        quote(`<strong>QUOTE</strong><br/>` +
+          `${qty} × ${job.material} parts at <strong>$${unit}/each</strong> · total <strong>$${total} USDC</strong><br/>` +
+          `Lead time: ${eta}<br/><br/>` +
+          `<button onclick="lockEscrow(${total})" style="background:#0f1117;color:#fff;">🔒 Lock $${total} in MilestoneEscrow (Base Sepolia)</button>`);
+      }, 900);
+    }
+
+    window.lockEscrow = function (amount) {
+      bubble("agent", `Locking $${amount} USDC in MilestoneEscrow on Base Sepolia · funded from your CDP wallet · escrow released on milestone evidence + verifier ATTESTED…`);
+      setTimeout(() => {
+        const tx = "0x" + Math.random().toString(16).slice(2, 18) + "abc...";
+        quote(`<strong>ESCROW LOCKED ✓</strong><br/>` +
+          `Tx: <code>${tx}</code><br/>` +
+          `State: Funded → Locked. Operator agent has accepted the job and will fire the first task on the a2a stream.<br/>` +
+          `<a href="https://sepolia.basescan.org" target="_blank" style="color:#0f1117;text-decoration:underline;">View on Basescan</a>`);
+      }, 1200);
+    };
+
+    // boot
+    renderCaps();
     poll();
-    setInterval(poll, 4000);
+    setInterval(poll, 5000);
+    bubble("agent", "Hi — I'm the operator agent for this enterprise. I'm online and accepting jobs. Tell me about what you need and I'll quote it against my live capabilities.");
+    setTimeout(nextField, 600);
   </script>
 </body>
 </html>

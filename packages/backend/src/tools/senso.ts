@@ -8,6 +8,7 @@
 //
 // Per scout-juliet research (ai/research/10-cited-md.md).
 
+import { emit } from "../lib/event-bus.js";
 const MOCK = process.env.MOCK_SENSO !== "false";
 const BASE = process.env.SENSO_BASE_URL ?? "https://apiv2.senso.ai/api/v1";
 const KEY = process.env.SENSO_API_KEY ?? "";
@@ -62,11 +63,14 @@ export async function publishToCited(input: {
   profile: OperatorProfile;
   publisher_ids?: string[];
 }): Promise<{ content_id: string; url?: string }> {
+  emit({ kind: "senso.publish.start", sponsor: "Senso (cited.md)", level: "info", session_id: input.profile.enterprise_id, text: `POST /org/content-engine/publish geo_question_id=${input.geo_question_id}`, payload: { geo_question_id: input.geo_question_id, seo_title: `${input.profile.name} — PCC operator`, capabilities_count: input.profile.capabilities.length } });
   if (MOCK || !KEY) {
-    return {
+    const r = {
       content_id: `senso-mock-${input.profile.enterprise_id.slice(0, 8)}`,
       url: `https://cited.md/c/mock-${input.profile.enterprise_id.slice(0, 8)}`
     };
+    emit({ kind: "senso.publish.mock", sponsor: "Senso (cited.md)", level: "warn", text: `MOCK_SENSO=${MOCK} key=${KEY ? "set" : "unset"} · returning fake content_id`, payload: r });
+    return r;
   }
 
   const body = {
@@ -85,8 +89,14 @@ export async function publishToCited(input: {
     },
     body: JSON.stringify(body)
   });
-  if (!res.ok) throw new Error(`senso publish failed: ${res.status} ${await res.text()}`);
-  return (await res.json()) as { content_id: string; url?: string };
+  if (!res.ok) {
+    const body = await res.text();
+    emit({ kind: "senso.publish.err", sponsor: "Senso (cited.md)", level: "err", session_id: input.profile.enterprise_id, text: `publish failed: HTTP ${res.status} ${body.slice(0,120)}` });
+    throw new Error(`senso publish failed: ${res.status} ${body}`);
+  }
+  const out = (await res.json()) as { content_id: string; url?: string };
+  emit({ kind: "senso.publish.done", sponsor: "Senso (cited.md)", level: "ok", session_id: input.profile.enterprise_id, text: `cited.md content_id=${out.content_id}${out.url ? ` · ${out.url}` : ""}`, payload: out });
+  return out;
 }
 
 /**

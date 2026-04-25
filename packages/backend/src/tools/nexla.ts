@@ -4,6 +4,7 @@
 //   • SERVICE KEY (Basic) — set NEXLA_SERVICE_KEY. We POST /token first to obtain a bearer.
 // We prefer SESSION_TOKEN when both are present.
 
+import { emit } from "../lib/event-bus.js";
 const MOCK = process.env.MOCK_NEXLA !== "false";
 const BASE = process.env.NEXLA_API_URL ?? "https://dataops.nexla.io/nexla-api";
 const SESSION_TOKEN = process.env.NEXLA_SESSION_TOKEN ?? "";
@@ -187,8 +188,10 @@ export async function scrapeOrIngest(input: {
   goal: string;
 }): Promise<{ source_id: string; dataflow_id: string; preview: unknown; source_type: string }> {
   const sourceType = detectSourceType(input.url);
+  emit({ kind: "nexla.detect", sponsor: "Nexla", level: "info", session_id: input.session_id, text: `URL ${input.url} → source_type=${sourceType}`, payload: { url: input.url, source_type: sourceType } });
 
   if (MOCK) {
+    emit({ kind: "nexla.mock", sponsor: "Nexla", level: "warn", session_id: input.session_id, text: `MOCK_NEXLA=true · skipping real /token + /data_credentials + /data_sources` });
     return {
       source_id: `nexla-src-mock-${input.session_id.slice(0, 6)}`,
       dataflow_id: `nexla-df-mock-${input.session_id.slice(0, 6)}`,
@@ -210,12 +213,14 @@ export async function scrapeOrIngest(input: {
     };
   }
 
+  emit({ kind: "nexla.pipeline.start", sponsor: "Nexla", level: "info", session_id: input.session_id, text: `building ${sourceType} pipeline → InsForge sink`, payload: { source_url: input.url, source_type: sourceType, goal: input.goal } });
   const result = await buildPipelineFromPrompt({
     session_id: input.session_id,
     prompt: input.goal,
     source_url: input.url,
     source_type: sourceType
   });
+  emit({ kind: "nexla.pipeline.done", sponsor: "Nexla", level: "ok", session_id: input.session_id, text: `pipeline ${result.pipeline_status} · source_id=${result.source_id}`, payload: { source_id: result.source_id, sink_id: result.sink_id, pipeline_status: result.pipeline_status, nl_prompt: result.nl_prompt } });
   return {
     source_id: String(result.source_id),
     dataflow_id: `nexla-df-${result.source_id}`,

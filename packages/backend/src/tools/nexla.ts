@@ -43,11 +43,17 @@ async function apiFetch(path: string, init: RequestInit = {}): Promise<Response>
   return res;
 }
 
+// Matches Nexla SDK CredentialCreate model:
+// nexla_sdk/models/credentials/requests.py — fields: name, credentials_type,
+// description, auth_template_id, vendor_id, template_config, credentials.
 interface CredentialInput {
   name: string;
-  credential_type: string;
-  credentials_non_secure_data?: Record<string, unknown>;
-  credentials_secure_data?: Record<string, unknown>;
+  credentials_type: string;       // NOTE: plural "credentials_type" not "credential_type"
+  description?: string;
+  credentials?: Record<string, unknown>;
+  auth_template_id?: number;
+  vendor_id?: number;
+  template_config?: Record<string, unknown>;
 }
 
 export async function createCredential(input: CredentialInput): Promise<{ id: number }> {
@@ -125,9 +131,10 @@ export async function buildPipelineFromPrompt(input: {
 
   // 1) credential for the source (REST URL by default)
   const cred = await createCredential({
-    name: `enterprise-${input.session_id}-${input.source_type ?? "rest"}`,
-    credential_type: input.source_type ?? "rest",
-    credentials_non_secure_data: input.source_url ? { base_url: input.source_url } : {}
+    name: `enterprise-${input.session_id.slice(0,8)}-${input.source_type ?? "rest"}`,
+    credentials_type: input.source_type ?? "rest",
+    description: `Navi-created · ${input.prompt}`,
+    credentials: input.source_url ? { base_url: input.source_url } : {}
   });
 
   // 2) source

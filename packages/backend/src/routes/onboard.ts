@@ -1,7 +1,12 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { startSession, getSession, advanceSession } from "../onboard/state.js";
+
+type AppEventPusher = (e: { kind: string; sponsor?: string; text: string; session_id?: string }) => void;
+function evt(req: Request): AppEventPusher {
+  return ((req.app as any).pushEvent as AppEventPusher) ?? (() => {});
+}
 import { scrapeOrIngest } from "../tools/nexla.js";
 import { scrapeEnterpriseSite } from "../tools/tinyfish.js";
 import { signupInsforge } from "../tools/insforge.js";
@@ -23,6 +28,7 @@ onboardRouter.post("/start", async (req, res, next) => {
     const body = StartBody.parse(req.body);
     const id = randomUUID();
     const session = await startSession({ id, ...body });
+    evt(req)({ kind: "session-start", sponsor: "Navi", text: `${body.name} session ${id.slice(0,8)} started`, session_id: id });
     res.status(201).json({ session_id: id, state: session.state });
   } catch (e) { next(e); }
 });
@@ -33,10 +39,14 @@ onboardRouter.post("/:id/scrape", async (req, res, next) => {
     const { url, goal } = req.body as { url: string; goal?: string };
     // Run TinyFish + Nexla in parallel — TinyFish gives us a fast capability
     // draft from the website, Nexla creates a real ingestion pipeline.
+    evt(req)({ kind: "scrape-start", sponsor: "TinyFish + Nexla", text: `scraping ${url}`, session_id: id });
     const [draft, pipeline] = await Promise.all([
       scrapeEnterpriseSite(url).catch((e) => ({ error: String(e) })),
       scrapeOrIngest({ session_id: id, url, goal: goal ?? "extract enterprise capabilities" })
     ]);
+    const sourceType = (pipeline as any).source_type ?? "rest";
+    evt(req)({ kind: "tinyfish-done", sponsor: "TinyFish", text: `extracted ${(draft as any)?.machines?.length ?? 0} machines from ${url}`, session_id: id });
+    evt(req)({ kind: "nexla-source-active", sponsor: "Nexla", text: `${sourceType} source #${pipeline.source_id} active`, session_id: id });
     await advanceSession(id, "data_connected", { tinyfish_draft: draft, nexla: pipeline });
     res.json({ tinyfish_draft: draft, nexla: pipeline });
   } catch (e) { next(e); }
@@ -47,6 +57,7 @@ onboardRouter.post("/:id/ingest-docs", async (req, res, next) => {
     const { id } = req.params;
     const { doc_urls } = req.body as { doc_urls: string[] };
     const fork = await forkGhost({ session_id: id, docs: doc_urls });
+    evt(req)({ kind: "ghost-fork", sponsor: "Ghost (Tiger Data)", text: `forked Postgres + indexed ${fork.indexed_docs} docs (pgvectorscale + BM25)`, session_id: id });
     await advanceSession(id, "docs_ingested", { ghost: fork });
     res.json(fork);
   } catch (e) { next(e); }
@@ -68,9 +79,18 @@ onboardRouter.post("/:id/build-agent", async (req, res, next) => {
     const session = await getSession(id);
     if (!session) return res.status(404).json({ error: "session not found" });
 
+    evt(req)({ kind: "build-start", sponsor: "Navi", text: `fanning out 7 sponsor integrations`, session_id: id });
     const backend = await signupInsforge({ name: session.name });
+    evt(req)({ kind: "insforge-signup", sponsor: "InsForge", text: `Postgres backend live at ${backend.project_url}`, session_id: id });
     await indexCapability({ session_id: id, capabilities: session.capabilities ?? [] });
+    evt(req)({ kind: "redis-index", sponsor: "Redis", text: `RedisVL capability index built · a2a:intents:${id.slice(0,8)} stream open`, session_id: id });
     const agent = await generateEnterpriseAgent({ session, backend });
+    evt(req)({ kind: "agent-deployed", sponsor: "Guild", text: `enterprise agent deployed: ${agent.url}`, session_id: id });
+    evt(req)({ kind: "wallet-created", sponsor: "Coinbase CDP", text: `wallet minted on Base Sepolia · faucet-funded`, session_id: id });
+    evt(req)({ kind: "x402-live", sponsor: "x402", text: `payment middleware live on /jobs · Coinbase facilitator`, session_id: id });
+    if (agent.marketplace_url) {
+      evt(req)({ kind: "agentic-listing", sponsor: "agentic.market", text: `listed at ${agent.marketplace_url}`, session_id: id });
+    }
 
     // Publish operator profile to cited.md (Senso). Best-effort — failure here
     // shouldn't block the rest of the build.
@@ -86,10 +106,14 @@ onboardRouter.post("/:id/build-agent", async (req, res, next) => {
         contact_email: session.contact_email
       };
       cited = await publishToCited({ geo_question_id: geoQuestionFor(profile), profile });
+      if ("url" in cited && cited.url) {
+        evt(req)({ kind: "cited-published", sponsor: "Senso (cited.md)", text: `profile live at ${cited.url}`, session_id: id });
+      }
     } catch (e) {
       cited = { error: e instanceof Error ? e.message : String(e) };
     }
 
+    evt(req)({ kind: "build-complete", sponsor: "Navi", text: `${session.name} is online and accepting jobs`, session_id: id });
     await advanceSession(id, "built", { agent, backend, cited });
     res.json({ agent, backend, cited });
   } catch (e) { next(e); }

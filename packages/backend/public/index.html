@@ -7,81 +7,120 @@
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: #fafafa; color: #1a1a1a; }
-    .wrap { max-width: 760px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
-    header { padding: 1rem 1.2rem; background: #fff; border-bottom: 1px solid #e6e6e6; display: flex; align-items: center; gap: 0.7rem; }
-    header h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: 1fr 380px; height: 100vh; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } aside { display: none; } }
+    .col { display: flex; flex-direction: column; min-height: 0; }
+    aside { background: #0f1117; color: #e6edf3; border-left: 1px solid #30363d; }
+    aside header { padding: 1rem 1.2rem; border-bottom: 1px solid #30363d; }
+    aside h2 { margin: 0; font-size: 0.85rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
+    .feed { flex: 1; overflow-y: auto; padding: 0.6rem 1rem; }
+    .ev { display: flex; gap: 0.5rem; padding: 0.45rem 0; border-bottom: 1px solid #21262d; font-size: 0.84rem; }
+    .ev:last-child { border-bottom: 0; }
+    .evt { color: #6e7681; font-size: 0.7rem; min-width: 56px; }
+    .evb { background: #1f6feb; color: #fff; padding: 0.05rem 0.45rem; border-radius: 4px; font-size: 0.7rem; align-self: start; }
+    .evb.guild { background: #a371f7; }
+    .evb.tinyfish { background: #f59e0b; color: #000; }
+    .evb.nexla { background: #4ade80; color: #000; }
+    .evb.insforge { background: #ec4899; }
+    .evb.redis { background: #ef4444; }
+    .evb.ghost { background: #14b8a6; }
+    .evb.cdp, .evb.x402, .evb.agentic { background: #0052ff; }
+    .evb.senso { background: #fbbf24; color: #000; }
+    .evb.navi { background: #58a6ff; }
+    .evb.vapi { background: #fff; color: #0f1117; }
+    .col.chat { background: #fff; border-right: 1px solid #e6e6e6; }
+    .col.chat header { padding: 1rem 1.2rem; background: #fff; border-bottom: 1px solid #e6e6e6; display: flex; align-items: center; gap: 0.7rem; }
+    .col.chat header h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
     .phone { font-family: ui-monospace, monospace; font-size: 0.9rem; padding: 0.3rem 0.6rem; background: #111; color: #fff; border-radius: 6px; }
     .pulse { width: 8px; height: 8px; background: #093; border-radius: 50%; animation: p 1.4s infinite; display: inline-block; }
     @keyframes p { 0%,100%{opacity:1} 50%{opacity:0.3} }
     main { flex: 1; overflow-y: auto; padding: 1rem 1.2rem; }
-    .msg { margin: 0.7rem 0; display: flex; gap: 0.5rem; max-width: 90%; }
+    .msg { margin: 0.6rem 0; display: flex; gap: 0.5rem; max-width: 92%; }
     .msg.bot { margin-right: auto; }
     .msg.you { margin-left: auto; flex-direction: row-reverse; }
-    .bubble { padding: 0.6rem 0.85rem; border-radius: 12px; font-size: 0.95rem; line-height: 1.4; white-space: pre-wrap; }
-    .msg.bot .bubble { background: #fff; border: 1px solid #e6e6e6; }
+    .msg.voice { margin-right: auto; }
+    .bubble { padding: 0.55rem 0.8rem; border-radius: 12px; font-size: 0.94rem; line-height: 1.4; white-space: pre-wrap; }
+    .msg.bot .bubble { background: #f5f5f5; border: 1px solid #e6e6e6; }
     .msg.you .bubble { background: #111; color: #fff; }
-    .avatar { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: #4ade80; color: #0f1117; font-weight: 700; display: grid; place-items: center; font-size: 0.85rem; }
+    .msg.voice .bubble { background: #093; color: #fff; }
+    .avatar { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: #4ade80; color: #0f1117; font-weight: 700; display: grid; place-items: center; font-size: 0.78rem; }
     .msg.you .avatar { background: #111; color: #fff; }
-    .meta { font-size: 0.7rem; color: #999; margin-top: 0.2rem; }
-    .quick { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; }
-    .quick button { font-size: 0.78rem; padding: 0.3rem 0.6rem; background: #f0f0f0; border: 1px solid #ddd; border-radius: 999px; cursor: pointer; }
-    .quick button:hover { background: #e8e8e8; }
+    .msg.voice .avatar { background: #093; color: #fff; }
+    .meta { font-size: 0.7rem; color: #999; margin-top: 0.18rem; }
     footer { padding: 0.8rem 1.2rem; background: #fff; border-top: 1px solid #e6e6e6; }
     .input-row { display: flex; gap: 0.5rem; align-items: end; }
-    textarea { flex: 1; resize: none; padding: 0.65rem 0.8rem; border: 1px solid #ccc; border-radius: 10px; font: inherit; font-size: 0.95rem; max-height: 120px; }
-    button.send { padding: 0.65rem 1.2rem; border: 0; border-radius: 10px; background: #111; color: #fff; cursor: pointer; font-weight: 500; }
-    button.send:disabled { opacity: 0.4; cursor: not-allowed; }
-    .drop-hint { color: #888; font-size: 0.78rem; margin-top: 0.4rem; }
+    textarea { flex: 1; resize: none; padding: 0.6rem 0.75rem; border: 1px solid #ccc; border-radius: 10px; font: inherit; font-size: 0.95rem; max-height: 120px; }
+    .send-row { display: flex; gap: 0.4rem; }
+    button { padding: 0.55rem 0.9rem; border: 0; border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 0.92rem; }
+    button.send { background: #111; color: #fff; }
+    button.voice { background: #093; color: #fff; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .hint { color: #888; font-size: 0.78rem; margin-top: 0.4rem; }
     .drag-over { background: #f0fdf4 !important; border-color: #4ade80 !important; }
+    .pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.18rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 500; }
+    .pill.live { background: #093; color: #fff; }
+    .pill.idle { background: #ddd; color: #555; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <span class="pulse"></span>
-      <h1>Navi · drop docs and connections</h1>
-      <span class="phone">📞 +1 (650) 448-0770</span>
-    </header>
-    <main id="thread"></main>
-    <footer>
-      <div class="input-row">
-        <textarea id="input" rows="1" placeholder="Type, paste a URL, or drop files…"></textarea>
-        <button class="send" id="send" onclick="onSend()">Send</button>
-      </div>
-      <div class="drop-hint" id="drop-hint">drag PDFs / docs anywhere on the page · paste connection strings · I'll route them</div>
-    </footer>
+  <div class="grid">
+    <div class="col chat">
+      <header>
+        <span class="pulse"></span>
+        <h1>Navi · ops console</h1>
+        <span class="phone">📞 +1 (650) 448-0770</span>
+        <span style="margin-left:auto;" id="callPill" class="pill idle">no active call</span>
+      </header>
+      <main id="thread"></main>
+      <footer>
+        <div class="input-row">
+          <textarea id="input" rows="1" placeholder="Type, paste a URL, drop files…"></textarea>
+          <div class="send-row" style="display:flex;flex-direction:column;gap:0.3rem;">
+            <button class="send" id="send" onclick="onSend()">Send to Navi</button>
+            <button class="voice" id="voiceBtn" onclick="onSendToVoice()" title="Inject this text into the active phone call">📞 Speak via voice</button>
+          </div>
+        </div>
+        <div class="hint">drag PDFs anywhere · paste URLs / connection strings · text routes automatically</div>
+      </footer>
+    </div>
+    <aside>
+      <header>
+        <h2>Live integration feed</h2>
+        <div style="margin-top:0.4rem;font-size:0.75rem;color:#8b949e;">All sponsor calls + voice-agent transcript stream here in real time.</div>
+      </header>
+      <div class="feed" id="feed"></div>
+    </aside>
   </div>
+
   <script>
     const $ = (id) => document.getElementById(id);
     let sessionId = null;
     let companyName = null;
+    let lastEventTime = 0;
+    let lastTranscriptIdx = 0;
+    let activeCallId = null;
 
     function bubble(who, text, meta = "") {
       const t = $("thread");
       const div = document.createElement("div");
       div.className = "msg " + who;
-      const avatar = who === "you" ? "U" : "N";
+      const avatar = who === "you" ? "U" : who === "voice" ? "V" : "N";
       div.innerHTML = `<div class="avatar">${avatar}</div><div><div class="bubble"></div>${meta ? `<div class="meta">${meta}</div>` : ""}</div>`;
       div.querySelector(".bubble").textContent = text;
       t.appendChild(div);
       t.scrollTop = t.scrollHeight;
       return div;
     }
-    function quick(opts) {
-      const t = $("thread");
-      const wrap = document.createElement("div");
-      wrap.className = "msg bot";
-      wrap.innerHTML = `<div class="avatar">N</div><div><div class="bubble"></div><div class="quick"></div></div>`;
-      const q = wrap.querySelector(".quick");
-      opts.forEach((o) => {
-        const b = document.createElement("button");
-        b.textContent = o.label;
-        b.onclick = () => { o.run(); wrap.querySelector(".quick").remove(); };
-        q.appendChild(b);
-      });
-      wrap.querySelector(".bubble").textContent = "Quick actions:";
-      t.appendChild(wrap);
-      t.scrollTop = t.scrollHeight;
+
+    function eventRow(ev) {
+      const f = $("feed");
+      const div = document.createElement("div");
+      div.className = "ev";
+      const tStr = new Date(ev.t).toLocaleTimeString().split(" ")[0];
+      const sponsor = (ev.sponsor || "").toLowerCase().split(/\s|\(/)[0];
+      div.innerHTML = `<span class="evt">${tStr}</span><span class="evb ${sponsor}">${ev.sponsor || "Navi"}</span><span style="flex:1;color:#c9d1d9;">${ev.text}</span>`;
+      f.prepend(div);
+      while (f.children.length > 80) f.removeChild(f.lastChild);
     }
 
     async function startSession(name, url) {
@@ -89,7 +128,7 @@
       const j = await res.json();
       sessionId = j.session_id;
       companyName = name;
-      bubble("bot", `Got it — session ${sessionId.slice(0,8)} for ${name}. Open your operator dashboard while we work:`, `${location.origin}/op?id=${sessionId}`);
+      bubble("bot", `Got it — session ${sessionId.slice(0,8)} for ${name}.`, `op dashboard: ${location.origin}/op?id=${sessionId}`);
       return j;
     }
 
@@ -97,9 +136,9 @@
       bubble("bot", `Scraping ${url} via TinyFish + Nexla in parallel…`);
       const res = await fetch(`/onboard/${sessionId}/scrape`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, goal: "extract enterprise capabilities" }) });
       const j = await res.json();
-      const draft = j?.tinyfish_draft || j;
-      const machines = (draft.machines || []).map((m) => `• ${m.name || m.kind || JSON.stringify(m)}`).join("\n");
-      bubble("bot", `Pulled:\n${machines || JSON.stringify(j).slice(0,400)}\n\nWant to add SOPs or connect a database next?`);
+      const draft = j?.tinyfish_draft;
+      const machines = (draft?.machines || []).map((m) => `• ${m.name || m.kind}`).join("\n");
+      bubble("bot", `Extracted:\n${machines || JSON.stringify(j).slice(0, 300)}`);
     }
 
     async function ingestDocs(urls) {
@@ -110,11 +149,11 @@
     }
 
     async function buildAgent() {
-      bubble("bot", `Building your PCC agent — fanning out 7 sponsor integrations in parallel. ~30s.`);
+      bubble("bot", `Building your PCC agent — fanning out 7 sponsor integrations.`);
       const res = await fetch(`/onboard/${sessionId}/build-agent`, { method: "POST" });
       const j = await res.json();
       bubble("bot",
-        `Done. Your agent is live.\n\n` +
+        `🎉 Done. Your agent is live.\n\n` +
         `Operator dashboard: ${location.origin}/op?id=${sessionId}\n` +
         `Guild: ${j.agent?.url ?? "—"}\n` +
         `agentic.market: ${j.agent?.marketplace_url ?? "—"}\n` +
@@ -123,12 +162,9 @@
       );
     }
 
-    function looksLikeUrl(t) {
-      return /^https?:\/\//i.test(t.trim());
-    }
-    function looksLikeConnString(t) {
-      return /^(postgres|mysql|mongodb|redis|s3|sharepoint):\/\//i.test(t.trim()) || /sharepoint\.com|salesforce\.com|snowflakecomputing\.com/i.test(t);
-    }
+    function looksLikeUrl(t) { return /^https?:\/\//i.test(t.trim()); }
+    function looksLikeConnString(t) { return /^(postgres|postgresql|mysql|mongodb|redis|s3|sharepoint):\/\//i.test(t.trim()); }
+    function looksLikeDoc(t) { return /\.pdf|\.docx|\.html?$|drive\.google\.com|sharepoint\.com\/.+\.(pdf|docx)/i.test(t); }
 
     async function onSend() {
       const txt = $("input").value.trim();
@@ -136,58 +172,54 @@
       $("input").value = "";
       bubble("you", txt);
 
-      // Step 1: no session yet — first message is the company name
       if (!sessionId) {
         const m = txt.match(/^(.+?)\s+(?:at|@|—|-)\s+(https?:\/\/\S+)/i);
         let name = txt, url = null;
         if (m) { name = m[1]; url = m[2]; }
         await startSession(name, url);
-        if (url) {
-          await scrapeUrl(url);
-        } else {
-          bubble("bot", "Drop your website URL next, or paste a connection string for your ERP / CMMS / SharePoint, or attach an SOP doc.");
-        }
+        if (url) { await scrapeUrl(url); }
+        else bubble("bot", "Drop your website URL next, or paste a connection string for your ERP / CMMS, or attach an SOP doc.");
         return;
       }
 
-      // Step 2+: route by content
-      const urls = txt.split(/\s+/).filter(looksLikeUrl);
-      if (urls.length && urls.some(looksLikeConnString)) {
-        bubble("bot", "Connection string detected — creating Nexla source…");
-        await scrapeUrl(urls[0]);
+      const tokens = txt.split(/\s+/);
+      const urls = tokens.filter(looksLikeUrl);
+      const conns = tokens.filter(looksLikeConnString);
+
+      if (conns.length) {
+        bubble("bot", `Connection string detected (${conns.length}) — creating Nexla source(s)…`);
+        for (const c of conns) await scrapeUrl(c);
         return;
       }
-      if (urls.length === 1 && /\.pdf|\.docx|\.html?$|drive\.google\.com|sharepoint\.com/i.test(urls[0])) {
-        await ingestDocs(urls);
-        return;
-      }
-      if (urls.length === 1) {
-        await scrapeUrl(urls[0]);
-        return;
-      }
+      if (urls.length === 1 && looksLikeDoc(urls[0])) { await ingestDocs(urls); return; }
+      if (urls.length === 1) { await scrapeUrl(urls[0]); return; }
       if (urls.length > 1) {
-        await ingestDocs(urls);
+        const docs = urls.filter(looksLikeDoc);
+        const others = urls.filter((u) => !looksLikeDoc(u));
+        if (docs.length) await ingestDocs(docs);
+        for (const o of others) await scrapeUrl(o);
         return;
       }
+      if (/^build|deploy|ship|go live|finish|done$/i.test(txt)) { await buildAgent(); return; }
+      bubble("bot", `Noted. Say "build" when you're ready, or paste more docs/connections.`);
+    }
 
-      // Plain text — show quick actions
-      if (/build|done|deploy|finish|go live|ship/i.test(txt)) {
-        await buildAgent();
-        return;
-      }
-
-      bubble("bot", `Noted. When you're ready I can build your agent — say "build" or paste any remaining docs/URLs.`);
-      quick([
-        { label: "⚡ Build my PCC agent", run: () => buildAgent() },
-        { label: "Open operator dashboard", run: () => window.open(`/op?id=${sessionId}`, "_blank") }
-      ]);
+    async function onSendToVoice() {
+      const txt = $("input").value.trim();
+      if (!txt) return;
+      if (!activeCallId) { bubble("bot", "No active call to inject into. Dial +1 (650) 448-0770 first."); return; }
+      $("input").value = "";
+      bubble("you", `📞 → "${txt}"`, `injected into voice call`);
+      try {
+        const r = await fetch(`/calls/${activeCallId}/say`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: txt }) });
+        if (!r.ok) bubble("bot", `voice inject failed: ${r.status}`);
+      } catch (e) { bubble("bot", `voice inject error: ${e.message}`); }
     }
 
     $("input").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
     });
 
-    // Drag-and-drop docs (file names become document URLs by convention)
     document.body.addEventListener("dragover", (e) => { e.preventDefault(); document.body.classList.add("drag-over"); });
     document.body.addEventListener("dragleave", () => document.body.classList.remove("drag-over"));
     document.body.addEventListener("drop", (e) => {
@@ -196,13 +228,61 @@
       const files = Array.from(e.dataTransfer.files);
       if (!files.length) return;
       bubble("you", files.map((f) => `📄 ${f.name}`).join("\n"));
-      if (!sessionId) { bubble("bot", "Tell me your company name first, then drop docs."); return; }
-      // For now we treat dropped filenames as URLs (best-effort) — real upload would PUT to InsForge storage
+      if (!sessionId) { bubble("bot", "Tell me your company name first."); return; }
       ingestDocs(files.map((f) => `local://${f.name}`));
     });
 
-    // First contact
-    bubble("bot", "Hi — I'm Navi. While you're on the phone with the voice agent, drop docs and connections here. What's your company name? (e.g. \"Oakland Titanium Mills at https://oakland-titanium-mills.example\")");
+    // Poll the live event feed
+    async function pollEvents() {
+      try {
+        const r = await fetch(`/events?since=${lastEventTime}`);
+        if (!r.ok) return;
+        const { events } = await r.json();
+        events.sort((a, b) => a.t - b.t);
+        for (const ev of events) {
+          eventRow(ev);
+          lastEventTime = Math.max(lastEventTime, ev.t);
+        }
+      } catch {}
+    }
+
+    // Poll active Vapi call + mirror transcript into chat
+    async function pollVoice() {
+      try {
+        const r = await fetch("/calls/active");
+        if (!r.ok) return;
+        const { calls } = await r.json();
+        const live = calls.find((c) => c.status === "in-progress" || c.status === "ringing" || c.status === "queued");
+        if (live) {
+          activeCallId = live.id;
+          $("callPill").textContent = `📞 ${live.status}`;
+          $("callPill").className = "pill live";
+          const msgs = live.messages || [];
+          for (let i = lastTranscriptIdx; i < msgs.length; i++) {
+            const m = msgs[i];
+            if (!m) continue;
+            const role = m.role || m.message?.role;
+            const text = m.message || m.content || m.transcript || "";
+            if (text && (role === "user" || role === "bot" || role === "assistant" || role === "tool")) {
+              const who = role === "user" ? "you" : "voice";
+              bubble(who, (role === "assistant" || role === "bot") ? `🎙 ${text}` : text);
+            }
+          }
+          lastTranscriptIdx = msgs.length;
+        } else {
+          activeCallId = null;
+          $("callPill").textContent = "no active call";
+          $("callPill").className = "pill idle";
+          // reset transcript pointer on call end
+          lastTranscriptIdx = 0;
+        }
+      } catch {}
+    }
+
+    setInterval(pollEvents, 1500);
+    setInterval(pollVoice, 2500);
+
+    bubble("bot", "Hi — I'm Navi. While you're on the phone with the voice agent, drop docs and connections here. The right side shows every sponsor call landing in real time. What's your company name? (e.g. \"Oakland Titanium Mills at https://oakland-titanium-mills.example\")");
   </script>
 </body>
 </html>

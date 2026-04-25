@@ -115,10 +115,24 @@
     function eventRow(ev) {
       const f = $("feed");
       const div = document.createElement("div");
-      div.className = "ev";
+      div.className = "ev " + (ev.level || "info");
       const tStr = new Date(ev.t).toLocaleTimeString().split(" ")[0];
       const sponsor = (ev.sponsor || "").toLowerCase().split(/\s|\(/)[0];
-      div.innerHTML = `<span class="evt">${tStr}</span><span class="evb ${sponsor}">${ev.sponsor || "Navi"}</span><span style="flex:1;color:#c9d1d9;">${ev.text}</span>`;
+      const levelDot = { ok: "🟢", warn: "🟡", err: "🔴", info: "🔵" }[ev.level || "info"];
+      const dur = ev.duration_ms != null ? ` <span style="color:#6e7681;font-size:0.7rem;">${ev.duration_ms}ms</span>` : "";
+      const kindTag = ev.kind ? `<code style="font-size:0.7rem;color:#8b949e;">${ev.kind}</code>` : "";
+      const hasPayload = ev.payload && Object.keys(ev.payload).length;
+      const payloadId = `p${ev.t}-${Math.random().toString(36).slice(2,6)}`;
+
+      div.innerHTML = `
+        <span class="evt">${levelDot} ${tStr}</span>
+        <span class="evb ${sponsor}">${ev.sponsor || "Navi"}</span>
+        <span style="flex:1;color:#c9d1d9;line-height:1.35;">
+          ${kindTag}
+          <div>${ev.text || ""}${dur}</div>
+          ${hasPayload ? `<details id="${payloadId}" style="margin-top:0.25rem;"><summary style="cursor:pointer;font-size:0.72rem;color:#79c0ff;">payload (${Object.keys(ev.payload).length} keys)</summary><pre style="background:#0a0d12;padding:0.4rem;border-radius:4px;font-size:0.72rem;color:#8ddb8c;overflow-x:auto;margin-top:0.3rem;">${JSON.stringify(ev.payload, null, 2)}</pre></details>` : ""}
+        </span>
+      `;
       f.prepend(div);
       while (f.children.length > 80) f.removeChild(f.lastChild);
     }

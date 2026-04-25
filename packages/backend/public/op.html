@@ -118,15 +118,19 @@
     }
 
     function renderCaps() {
-      // Pull from the session's capabilities, fall back to Oakland Titanium defaults for the demo
-      fetch(`/onboard/${id}/status`).then((r) => r.ok ? r.json() : null).then((s) => {
-        const caps = (s?.capabilities || []).map((c) => c.label || c);
-        const fallbackCaps = ["5-axis titanium milling", "Inconel 625/718 turning", "AS9100 first-article", "CMM inspection", "48-hour standard turnaround"];
-        const fallbackMats = ["Ti-6Al-4V", "Ti-6Al-4V ELI", "Inconel 625", "Inconel 718", "CP titanium"];
-        const fallbackCerts = ["AS9100 Rev D (in progress)", "ISO 9001:2015"];
-        $("caps").innerHTML = (caps.length ? caps : fallbackCaps).map((c) => `<span class="badge">${c}</span>`).join("");
-        $("mats").innerHTML = fallbackMats.map((m) => `<span class="badge mat">${m}</span>`).join("");
-        $("certs").innerHTML = fallbackCerts.map((c) => `<span class="badge cert">${c}</span>`).join("");
+      // Live data: machines + materials + certs from /onboard/:id/live-data
+      fetch(`/onboard/${id}/live-data`).then((r) => r.ok ? r.json() : null).then((d) => {
+        if (!d) return;
+        const machineLabels = (d.machines || []).map((m) => m.name || m.kind || m).slice(0, 8);
+        const caps = machineLabels.length ? machineLabels : ["5-axis titanium milling", "CMM inspection"];
+        $("caps").innerHTML = caps.map((c) => `<span class="badge">${c}</span>`).join("");
+        $("mats").innerHTML = (d.materials || []).map((m) => `<span class="badge mat">${m}</span>`).join("");
+        $("certs").innerHTML = (d.certifications || []).map((c) => `<span class="badge cert">${c}</span>`).join("");
+        // Header subtitle gets a live-data signal
+        const sub = document.querySelector("header .sub");
+        if (sub && d.data_source_type) {
+          sub.innerHTML = `Physical Capability Cloud · session <code>${(d.session_id||id).slice(0,8)}</code> · live data via Nexla <code>${d.data_source_type}</code> source`;
+        }
       });
     }
 

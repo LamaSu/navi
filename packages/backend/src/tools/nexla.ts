@@ -159,19 +159,42 @@ export async function buildPipelineFromPrompt(input: {
 }
 
 /**
+ * Detect a Nexla source_type from the URL scheme.
+ * postgres://… → postgres, https://*.sharepoint.com → sharepoint, s3://… → s3, etc.
+ */
+export function detectSourceType(url: string): string {
+  const u = url.trim().toLowerCase();
+  if (u.startsWith("postgres://") || u.startsWith("postgresql://")) return "postgres";
+  if (u.startsWith("mysql://")) return "mysql";
+  if (u.startsWith("mongodb://") || u.startsWith("mongodb+srv://")) return "rest"; // Nexla doesn't have native mongo
+  if (u.startsWith("s3://")) return "s3";
+  if (u.startsWith("gs://")) return "gcs";
+  if (u.includes("sharepoint.com")) return "sharepoint";
+  if (u.includes("drive.google.com") || u.includes("docs.google.com")) return "gdrive";
+  if (u.includes("dropbox.com")) return "dropbox";
+  if (u.includes("salesforce.com") || u.includes("my.salesforce.com")) return "rest"; // OAuth REST
+  if (u.includes("snowflakecomputing.com")) return "snowflake";
+  return "rest";
+}
+
+/**
  * Higher-level helper used by the onboarding flow (back-compat with previous wrapper).
+ * Auto-detects source type from URL scheme.
  */
 export async function scrapeOrIngest(input: {
   session_id: string;
   url: string;
   goal: string;
-}): Promise<{ source_id: string; dataflow_id: string; preview: unknown }> {
+}): Promise<{ source_id: string; dataflow_id: string; preview: unknown; source_type: string }> {
+  const sourceType = detectSourceType(input.url);
+
   if (MOCK) {
     return {
       source_id: `nexla-src-mock-${input.session_id.slice(0, 6)}`,
       dataflow_id: `nexla-df-mock-${input.session_id.slice(0, 6)}`,
+      source_type: sourceType,
       preview: {
-        kind: "website-rest-source",
+        kind: `${sourceType}-source`,
         url: input.url,
         extracted: {
           name: "Oakland Titanium Mills",
@@ -191,11 +214,12 @@ export async function scrapeOrIngest(input: {
     session_id: input.session_id,
     prompt: input.goal,
     source_url: input.url,
-    source_type: "rest"
+    source_type: sourceType
   });
   return {
     source_id: String(result.source_id),
     dataflow_id: `nexla-df-${result.source_id}`,
-    preview: { status: result.pipeline_status, nl_prompt: result.nl_prompt }
+    source_type: sourceType,
+    preview: { status: result.pipeline_status, nl_prompt: result.nl_prompt, source_type: sourceType }
   };
 }

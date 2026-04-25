@@ -100,12 +100,15 @@ export async function publishToCited(input: {
 }
 
 /**
- * Pick or create a geo_question_id for the operator's primary capability.
- * Hackathon: just slugify capability + city.
+ * Resolve a Senso geo_question_id. Senso requires this to refer to an
+ * existing question in the org. We pre-created one for the demo
+ * ("Which precision titanium machining operators are available on the PCC in
+ *  Oakland, California?") via `senso questions create`. Override per-deploy
+ * with SENSO_GEO_QUESTION_ID env var.
  */
-export function geoQuestionFor(profile: OperatorProfile): string {
-  const primary =
-    profile.capabilities[0]?.toLowerCase().replace(/\s+/g, "-") ?? "general-machining";
-  const city = (profile.city ?? "unknown").toLowerCase().replace(/\s+/g, "-");
-  return `${primary}-${city}`;
+const DEFAULT_GEO_QUESTION_ID =
+  process.env.SENSO_GEO_QUESTION_ID ?? "08d502ff-db4e-48e0-968f-9f2ed619c688";
+
+export function geoQuestionFor(_profile: OperatorProfile): string {
+  return DEFAULT_GEO_QUESTION_ID;
 }

@@ -1,56 +1,107 @@
-# Enterprise-Operator Agent for PCC
-**Ship to Prod AI Hackathon entry — April 24, 2026**
+# Navi — Enterprise-Operator Agent for PCC
 
-An autonomous agent that walks the **pointman** at any enterprise (machining shop, fleet operator, manufacturing plant, lab) through getting online on the Physical Capability Cloud (PCC), declaring their capabilities, locking escrow-backed jobs, and fulfilling them via a2a + x402.
+**Ship to Prod AI Hackathon · San Francisco · April 24, 2026**
 
-## The Context Engineering Challenge angle
+Every enterprise with real capability — every machine shop, fleet, or lab — wastes two weeks integrating with an agent marketplace before they earn a dollar. **Navi compresses that to one phone call.**
 
-Per the hackathon rubric, our agent:
-- Takes **real action** on the open web: scrapes the enterprise's own website + docs to context-engineer their capability declaration; writes on-chain to Base Sepolia for escrow; publishes capability provenance to `cited.md`.
-- Is grounded in **real sources** — the enterprise's own CMMS/ERP/SCADA or website inventory, not LLM hallucination.
-- Uses **≥3 sponsor tools** (see below).
-- **Monetizes via x402** — the enterprise gets paid when jobs settle.
+## 🎬 2-minute demo
 
-## Sponsor tool matrix
+[![Watch the demo](docs/media/demo-thumbnail.png)](docs/media/navi-demo-2min.mp4)
 
-| Sponsor | Integration | Track-win angle |
+**[▶️ Watch `docs/media/navi-demo-2min.mp4`](docs/media/navi-demo-2min.mp4)** · 114 seconds · 1920×1080 · 4.1 MB
+
+## 🔗 Live endpoints
+
+| Channel | URL / Contact |
+|---|---|
+| 📞 **Voice agent** | **+1 (650) 448-0770** |
+| 💬 **Chat console** | https://pcc-operator-backend-production.up.railway.app/ |
+| 🤖 **Operator dashboard** | https://pcc-operator-backend-production.up.railway.app/op?id=&lt;session&gt; |
+| 🧠 **Guild-published agent** | https://app.guild.ai/agents/globalmysterysnailrevolution/pcc-enterprise-onboarder |
+| ❤️ **Health** | https://pcc-operator-backend-production.up.railway.app/health |
+
+## 🔌 10 sponsor integrations
+
+| Sponsor | Status | Role |
 |---|---|---|
-| **Guild AI** ($1K) | Deploy the pointman-facing onboarding agent on Guild; uses `llmAgent` + `guildTools` | Non-trivial agent lifecycle: build → govern → share a *real* enterprise-grade agent |
-| **Redis AI Incubator** | RedisVL vector search + Agent Memory Server + a2a-redis Streams for a2a coordination | "Multi-module usage + a2a layer" — Redis historically rewards this |
-| **TinyFish** | `agent.tinyfish.ai` to scrape enterprise websites & extract capabilities | Turns a website with no API into the first draft of a PCC capability manifest |
-| **InsForge** | Backend-as-a-service for onboarding state + inventory schemas + auth | BaaS wired end-to-end: MCP-driven schema, Postgres tables for machines/jobs/escrow |
-| **Chainguard** | `cgr.dev/chainguard/node` base image + Libraries `.npmrc` + cgstart skill | Supply-chain secure from day 0 — fuse Chainguard SBOM into PCC's evidence chain |
-| **Ghost** | `ghost mcp install` for agent context surfaces; publish outputs to Ghost | Agent context distribution + publishing pipeline |
-| **x402 / CDP / agentic.market / cited.md** | x402 for escrow settlement, CDP for wallet, agentic.market for listing, cited.md for capability evidence | Headline Context Engineering monetization requirement |
+| **Vapi** | ✅ LIVE | voice onboarding (phone number live) |
+| **Guild** | ✅ LIVE | published llmAgent v1.0.1, public |
+| **Nexla** | ✅ LIVE | real data pipelines (sources 120398+ in dataops.nexla.io) |
+| **InsForge** | ✅ LIVE | Postgres backend auto-provisioned per enterprise |
+| **Redis** | ✅ LIVE | RedisVL capability index + XADD a2a intent stream |
+| **Coinbase CDP** | ✅ LIVE | viem-generated Base Sepolia wallet per operator |
+| **TinyFish** | ✅ LIVE | SSE agent scrapes enterprise websites |
+| **Senso (cited.md)** | ✅ LIVE | content engine draft published (content_id tracked) |
+| **Chainguard** | ✅ LIVE | `cgr.dev/chainguard/node` base image on Railway |
+| **agentic.market** | 🟡 POST attempted, graceful fallback |
+| **x402** | 🟡 middleware scaffolded, Coinbase facilitator wired |
 
-## Architecture (high level)
+**8 fully real, 2 partial** — [see full breakdown in ARCHITECTURE.md](docs/ARCHITECTURE.md#6-whats-real-vs-mock-right-now)
+
+## 🧱 Three-storage-layer story
+
+The inevitable judge question is "three databases, really?" Here's the honest answer:
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  POINTMAN (enterprise human operator, e.g. shop floor lead)  │
-└──────────────────┬───────────────────────────────────────────┘
-                   │ chat
-┌──────────────────▼───────────────────────────────────────────┐
-│  ENTERPRISE-OPERATOR AGENT (Guild-deployed, llmAgent)        │
-│  - walks through onboarding                                  │
-│  - scrapes enterprise website via TinyFish                   │
-│  - drafts capability manifest (a2a intents + x402 pricing)   │
-│  - registers operator with PCC agent-package                 │
-│  - stores session state in InsForge                          │
-│  - uses RedisVL to match incoming jobs to capabilities       │
-│  - locks MilestoneEscrow on Base Sepolia via x402 + CDP      │
-│  - publishes capability evidence to cited.md                 │
-└──────────────────┬───────────────────────────────────────────┘
-                   │
-    ┌──────────────┼──────────────────────────────────┐
-    │              │                                   │
-    ▼              ▼                                   ▼
-┌──────────┐  ┌──────────┐                     ┌──────────────┐
-│ InsForge │  │  Redis   │                     │ PCC (a2a +   │
-│  (state) │  │ (memory) │                     │  x402 + reg) │
-└──────────┘  └──────────┘                     └──────────────┘
+📚 InsForge      ← the operator's books        (durable, ACID, one per enterprise)
+📓 Ghost         ← the verifier's scratchpad    (forked Postgres per capture, discarded after)
+⚡ Redis         ← the agent's nervous system  (µs working memory + a2a Streams bus)
 ```
 
-## Status
+Same data shape, three different latency × durability points. [Full sequence diagram in ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-See `ai/supervisor/status.json`. Plan at `docs/PLAN.md` and in shared Google Doc.
+## 🏗️ Architecture at a glance
+
+```
+┌─ phone / chat / Guild ────────────┐
+│              ↓                    │
+│  Navi backend (Express on         │
+│  Chainguard image, Railway)       │
+│              ↓                    │
+│  TinyFish  Nexla    (discovery)   │
+│              ↓                    │
+│  InsForge  Redis  Ghost  (storage)│
+│              ↓                    │
+│  CDP → x402 → agentic.market      │
+│  Senso → cited.md                 │
+│  Guild deploy                     │
+│              ↓                    │
+│  🤖 new operator agent ONLINE    │
+└───────────────────────────────────┘
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for 6 Mermaid flowcharts with full detail.
+
+## 📂 Repository
+
+```
+navi/
+├── packages/backend/           ← Express + 8 real sponsor wrappers + Dockerfile (Chainguard)
+├── packages/guild-agent/       ← published Guild llmAgent source
+├── apps/voice/                 ← Vapi assistant config + Task Runner prompt
+├── docs/
+│   ├── media/navi-demo-2min.mp4   ← 2-min demo video
+│   ├── media/voiceover.mp3        ← raw voiceover (AndrewNeural, 114s)
+│   ├── ARCHITECTURE.md            ← 6 Mermaid diagrams
+│   ├── DEMO-3MIN.md               ← stage script (3-min)
+│   ├── VIDEO-2MIN.md              ← video storyboard
+│   ├── SUBMISSIONS-FINAL.md       ← per-track copy for Devpost
+│   └── PLAN-V3.md
+└── fixtures/oakland-titanium-mills/  ← demo enterprise
+```
+
+## 🚀 Run it yourself
+
+```bash
+git clone https://github.com/LamaSu/navi.git
+cd navi/packages/backend
+cp .env.example .env.local  # fill in keys (see docs/INTEGRATION-TASKS.md)
+pnpm install
+pnpm dev                     # → http://localhost:3000
+```
+
+Or hit the live Railway deploy directly — see the URLs above.
+
+---
+
+**Built in ~6 hours at Ship to Prod · AWS Builder Loft SF · April 24 2026**

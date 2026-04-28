@@ -1,52 +1,31 @@
 {
-  "task": "Ship to Prod hackathon: meta-agent that helps enterprises build their own PCC agent. Use sponsors to win multiple tracks.",
-  "classification": "build+discover (hackathon, rescoped)",
-  "started_at": "2026-04-24T13:20:00Z",
-  "updated_at": "2026-04-24T13:49:00Z",
+  "task": "Navi v2 — vendor-free rearchitecture for permanent PCC operator onboarding",
+  "classification": "research+build (target-state design + migration plan)",
+  "started_at": "2026-04-28T00:00:00Z",
+  "updated_at": "2026-04-28T00:00:00Z",
   "status": "running",
-  "current_phase": "Phase 4: Team Hand-off + Implementation Wave",
-  "progress_pct": 40,
+  "current_phase": "Phase 3: Parallel Research",
+  "progress_pct": 25,
   "phases": [
-    {"id": 0, "name": "Intake + Dashboard", "status": "completed", "completed_at": "2026-04-24T13:20:30Z", "notes": "dashboard up :3457, Guild CLI installed, repos cloned"},
-    {"id": 1, "name": "Classification", "status": "completed", "completed_at": "2026-04-24T13:20:40Z", "notes": "build+discover rescoped to meta-agent factory"},
-    {"id": 2, "name": "Wheel-Scout", "status": "skipped", "notes": "sponsors are mandatory; landscape = sponsor list"},
-    {"id": 3, "name": "Parallel Research", "status": "completed", "completed_at": "2026-04-24T13:44:00Z", "notes": "7/7 scouts done: luma+judges, Guild, Redis+TinyFish, InsForge+Ghost, Chainguard, payment rails, PCC internal"},
-    {"id": 4, "name": "Team Hand-off + Impl", "status": "running", "started_at": "2026-04-24T13:44:00Z", "notes": "INTEGRATION-TASKS.md written; PLAN-V3 final; user rescoped to meta-agent + Vapi voice"},
-    {"id": 5, "name": "Integration + Checkpoint", "status": "pending"},
-    {"id": 6, "name": "Smoke Test", "status": "pending"}
+    {"id": 0, "name": "Intake", "status": "completed", "completed_at": "2026-04-28T00:00:00Z", "notes": "intake.json written; v1 state preserved for diff"},
+    {"id": 1, "name": "Classify + Decompose", "status": "completed", "completed_at": "2026-04-28T00:00:00Z", "notes": "research+build hybrid · 7 parallel research streams"},
+    {"id": 2, "name": "Wheel-Scout", "status": "skipped", "notes": "wheel-scout work happens INSIDE the 7 parallel research streams (each evaluates OSS alternatives)"},
+    {"id": 3, "name": "Parallel Research", "status": "running", "started_at": "2026-04-28T00:00:00Z"},
+    {"id": 4, "name": "Synthesis (target architecture)", "status": "pending"},
+    {"id": 5, "name": "Migration plan", "status": "pending"},
+    {"id": 6, "name": "Integration + Checkpoint", "status": "pending"}
   ],
-  "agents": [
-    {"name": "scout-alpha", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "11 sponsors, 25+ judges, $45K pool, submit 4:30pm, demos 5pm"},
-    {"name": "scout-bravo", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "Guild = OpenAPI custom integration auto-generates tools; no external npm in agent code"},
-    {"name": "scout-charlie", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "Redis RedisVL+AMS+a2a-redis; TinyFish 500cr/mo free, SSE agent endpoint"},
-    {"name": "scout-delta", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "InsForge /agents/v1/signup 60s instant backend; Ghost = Tiger Data agentic Postgres 20+ MCP tools"},
-    {"name": "scout-echo", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "Chainguard cgr.dev base image + .npmrc Libraries + cgstart skill"},
-    {"name": "scout-foxtrot", "role": "researcher", "model": "sonnet", "status": "completed", "summary": "x402+CDP+agentic.market OK; cited.md is Senso $2.5K/mo product — dropped"},
-    {"name": "scout-golf", "role": "Explore", "model": "sonnet", "status": "completed", "summary": "PCC: 27 packages, 34 a2a intents, 219 agent-package tools, 80+ routes"}
-  ],
+  "agents": [],
   "events": [
-    {"time": "2026-04-24T13:20:00Z", "type": "info", "message": "Pipeline started"},
-    {"time": "2026-04-24T13:31:00Z", "type": "info", "message": "7 parallel scout agents spawned"},
-    {"time": "2026-04-24T13:44:00Z", "type": "phase_complete", "message": "All 7 scouts returned (Chainguard, Redis+TinyFish, InsForge+Ghost, payment rails, luma, PCC internal, Guild)"},
-    {"time": "2026-04-24T13:44:30Z", "type": "decision", "message": "Rescoped to meta-agent factory per user; Vapi voice added"},
-    {"time": "2026-04-24T13:45:00Z", "type": "decision", "message": "cited.md dropped; x402+agentic.market for monetization"},
-    {"time": "2026-04-24T13:49:00Z", "type": "info", "message": "INTEGRATION-TASKS.md written for team hand-off"}
+    {"time": "2026-04-28T00:00:00Z", "type": "info", "message": "Phase 0/1 complete; spawning 7-agent research wave"}
   ],
   "errors": [],
   "decisions": [
-    "Working dir: C:\\Users\\globa\\shiptoprod-agent (new, standalone)",
-    "Skip wheel-scout: sponsors mandatory",
-    "Meta-agent architecture: 2-layer (Guild-thin + Node backend) due to Guild SDK constraints",
-    "Drop cited.md (Senso $2.5K/mo), keep x402+agentic.market",
-    "Add Vapi voice agent (user request 2026-04-24 13:48)",
-    "Demo via Guild chat OR Vapi phone; web UI is backup",
-    "Fake enterprise: Oakland Titanium Mills (fixture HTML)"
+    "Keep what genuinely improves PCC; drop sponsor performances",
+    "Promote Navi into PCC as a first-class package (not a separate repo) post-research",
+    "OSS-first for every replaceable layer; self-host on Spark where applicable",
+    "Anthropic SDK directly (skip Guild SDK lock-in)"
   ],
-  "blockers": [
-    "Google Doc auth (user confirmed will /mcp)",
-    "Guild auth login (user action required)",
-    "CDP/TinyFish/Redis Cloud/Vapi API keys (user signup)"
-  ],
-  "broadcast_cron_id": "e2b0762c",
+  "broadcast_cron_id": null,
   "smoke_test": {"verdict": "pending"}
 }

@@ -1,28 +1,27 @@
 {
-  "project": "shiptoprod-enterprise-operator-agent",
-  "context": "hackathon entry for Ship to Prod AI Hackathon (luma.com/shiptoprod), 2026-04-24",
-  "goal": "Win multiple tracks: Context Engineering Challenge (primary), Guild ($1K), Redis AI Incubator, TinyFish, InsForge, Chainguard, Ghost",
-  "pcc_related": true,
-  "pcc_repo": "C:\\Users\\globa\\physical-capability-cloud",
-  "lamasu_remote": true,
-  "stack_plan": "TypeScript + Node (for Guild/CopilotKit compat) + Redis (sponsor) + InsForge/Ghost backend (sponsor) + x402 escrow (PCC contracts)",
+  "project": "navi-v2",
+  "context": "post-hackathon rearchitecture — drop vendor lock, drop costly programs, keep what works, make PCC integration as effective as possible",
+  "started_at": "2026-04-28T00:00:00Z",
+  "current_state": {
+    "repo": "C:\\Users\\globa\\shiptoprod-agent (LamaSu/navi)",
+    "live_demo": "https://pcc-operator-backend-production.up.railway.app/",
+    "voice": "+1 (650) 448-0770 (Vapi)",
+    "guild_agent": "globalmysterysnailrevolution/pcc-enterprise-onboarder v1.0.1",
+    "sponsors_wired": ["Vapi", "Guild", "Nexla", "InsForge", "Redis", "CDP", "TinyFish", "Senso", "Chainguard"],
+    "score": "8/10 fully real, 2 partial, Ghost skipped"
+  },
+  "pcc_repo": "C:\\Users\\globa\\physical-capability-cloud (LamaSu/physical-capability-cloud)",
+  "constraints": [
+    "drop vendor lock where possible",
+    "drop costly programs (Senso $2.5K/mo, Nexla $50K/yr enterprise)",
+    "keep what genuinely makes the system better",
+    "PCC integration must be first-class (not a sidecar)",
+    "use Spark (192.168.108.72, 119GB RAM) for self-hosted services where it makes sense",
+    "operator onboarding is the killer use-case — keep the demo flow"
+  ],
+  "deliverable": "ai/research/NAVI-V2-TARGET-ARCHITECTURE.md + ai/research/NAVI-V2-MIGRATION-PLAN.md",
+  "stack_target": "TypeScript monorepo, lives inside PCC as @pcc/agent-onboarder + @pcc/operator-runtime, uses Anthropic SDK directly",
   "test_cmd": "pnpm test",
-  "has_memory": false,
-  "tools_available": [
-    "chrome-tokens (for sponsor auth extraction)",
-    "camoufox (primary browser)",
-    "codesight",
-    "spark-run (DGX Spark offload)",
-    "mcp__claude_ai_Google_Drive (requires OAuth)"
-  ],
-  "tools_gaps_identified": [
-    "Google Docs write access (OAuth needed)",
-    "Guild CLI (need to npm install -g @guildai/cli)",
-    "Ghost CLI (need to curl install.ghost.build)",
-    "TinyFish credits/key",
-    "InsForge promo token",
-    "cited.md publishing mechanism"
-  ],
-  "intake_time": "2026-04-24T13:20:00Z",
-  "codesight_indexed": false
+  "has_memory": true,
+  "intake_time": "2026-04-28T00:00:00Z"
 }

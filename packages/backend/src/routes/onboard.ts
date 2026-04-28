@@ -8,12 +8,13 @@ function evt(req: Request): AppEventPusher {
   return ((req.app as any).pushEvent as AppEventPusher) ?? (() => {});
 }
 import { scrapeOrIngest } from "../tools/nexla.js";
-import { scrapeEnterpriseSite } from "../tools/tinyfish.js";
+import { extractStructured } from "../tools/web-extract.js";
 import { signupInsforge } from "../tools/insforge.js";
 import { forkGhost } from "../tools/ghost.js";
 import { indexCapability } from "../tools/redis.js";
 import { generateEnterpriseAgent } from "../onboard/generate.js";
-import { publishToCited, geoQuestionFor } from "../tools/senso.js";
+import { publishOperator } from "../tools/pcc-discovery.js";
+import { writeOperatorMirror } from "../tools/static-mirror.js";
 
 export const onboardRouter = Router();
 
@@ -33,22 +34,51 @@ onboardRouter.post("/start", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Capability draft schema. Mirrors the shape the old TinyFish wrapper
+// returned, so downstream consumers (operator dashboard, live-data feed) keep
+// working. Extend this when we want richer extraction.
+const draftSchema = z.object({
+  name: z.string(),
+  machines: z
+    .array(
+      z.object({
+        name: z.string(),
+        kind: z.string().optional(),
+        envelope: z.string().optional(),
+        notes: z.string().optional()
+      })
+    )
+    .optional(),
+  hours: z.string().optional(),
+  services: z.array(z.string()).optional(),
+  contact: z.string().optional(),
+  certifications: z.array(z.string()).optional()
+});
+
 onboardRouter.post("/:id/scrape", async (req, res, next) => {
   try {
     const { id } = req.params;
     const { url, goal } = req.body as { url: string; goal?: string };
-    // Run TinyFish + Nexla in parallel — TinyFish gives us a fast capability
-    // draft from the website, Nexla creates a real ingestion pipeline.
-    evt(req)({ kind: "scrape-start", sponsor: "TinyFish + Nexla", text: `scraping ${url}`, session_id: id });
-    const [draft, pipeline] = await Promise.all([
-      scrapeEnterpriseSite(url).catch((e) => ({ error: String(e) })),
+    // Run camoufox+Claude structured extraction + Nexla in parallel —
+    // web-extract gives us a fast capability draft from the website (stealth
+    // fetch + LLM tool-use), Nexla creates the real ingestion pipeline.
+    evt(req)({ kind: "scrape-start", sponsor: "Camoufox + Nexla", text: `scraping ${url}`, session_id: id });
+    const [extractDraft, pipeline] = await Promise.all([
+      extractStructured({
+        url,
+        schema: draftSchema,
+        goal:
+          goal ??
+          "Extract company name, machines (each with name, kind, envelope/dimensions, notes), operating hours, services offered, primary contact email, and certifications."
+      }).catch((e) => ({ error: e instanceof Error ? e.message : String(e) })),
       scrapeOrIngest({ session_id: id, url, goal: goal ?? "extract enterprise capabilities" })
     ]);
     const sourceType = (pipeline as any).source_type ?? "rest";
-    evt(req)({ kind: "tinyfish-done", sponsor: "TinyFish", text: `extracted ${(draft as any)?.machines?.length ?? 0} machines from ${url}`, session_id: id });
+    const machineCount = Array.isArray((extractDraft as any)?.machines) ? (extractDraft as any).machines.length : 0;
+    evt(req)({ kind: "web-extract-done", sponsor: "Camoufox", text: `extracted ${machineCount} machines from ${url}`, session_id: id });
     evt(req)({ kind: "nexla-source-active", sponsor: "Nexla", text: `${sourceType} source #${pipeline.source_id} active`, session_id: id });
-    await advanceSession(id, "data_connected", { tinyfish_draft: draft, nexla: pipeline });
-    res.json({ tinyfish_draft: draft, nexla: pipeline });
+    await advanceSession(id, "data_connected", { web_extract: extractDraft, nexla: pipeline });
+    res.json({ web_extract: extractDraft, nexla: pipeline });
   } catch (e) { next(e); }
 });
 
@@ -92,30 +122,48 @@ onboardRouter.post("/:id/build-agent", async (req, res, next) => {
       evt(req)({ kind: "agentic-listing", sponsor: "agentic.market", text: `listed at ${agent.marketplace_url}`, session_id: id });
     }
 
-    // Publish operator profile to cited.md (Senso). Best-effort — failure here
-    // shouldn't block the rest of the build.
-    let cited: { content_id: string; url?: string } | { error: string };
+    // Wave 1.3: replace Senso/cited.md + agentic.market with PCC native discovery
+    // (DHT announce + onboard register) plus a static SEO mirror that we host
+    // ourselves. Both are best-effort — failures don't block the rest of the build.
+    const profile = {
+      enterprise_id: session.id,
+      name: session.name,
+      url: session.url,
+      capabilities: (session.capabilities ?? []).map((c) => c.label),
+      agent_url: agent.url,
+      marketplace_url: agent.marketplace_url,
+      contact_email: session.contact_email
+    };
+
+    let discovery: { registration_id: string; discovery_url: string; dht_announced: boolean; dht_error?: string } | { error: string };
     try {
-      const profile = {
-        enterprise_id: session.id,
-        name: session.name,
-        url: session.url,
-        capabilities: (session.capabilities ?? []).map((c) => c.label),
-        agent_url: agent.url,
-        marketplace_url: agent.marketplace_url,
-        contact_email: session.contact_email
-      };
-      cited = await publishToCited({ geo_question_id: geoQuestionFor(profile), profile });
-      if ("url" in cited && cited.url) {
-        evt(req)({ kind: "cited-published", sponsor: "Senso (cited.md)", text: `profile live at ${cited.url}`, session_id: id });
-      }
+      discovery = await publishOperator(profile);
+      evt(req)({
+        kind: "pcc-discovery-published",
+        sponsor: "PCC",
+        text: `operator announced ${discovery.discovery_url}${discovery.dht_announced ? " · DHT live" : ""}`,
+        session_id: id
+      });
     } catch (e) {
-      cited = { error: e instanceof Error ? e.message : String(e) };
+      discovery = { error: e instanceof Error ? e.message : String(e) };
+    }
+
+    let mirror: { path: string; slug: string; url_path: string } | { error: string };
+    try {
+      mirror = await writeOperatorMirror(profile);
+      evt(req)({
+        kind: "static-mirror-written",
+        sponsor: "GitHub Pages",
+        text: `mirror at ${mirror.url_path}`,
+        session_id: id
+      });
+    } catch (e) {
+      mirror = { error: e instanceof Error ? e.message : String(e) };
     }
 
     evt(req)({ kind: "build-complete", sponsor: "Navi", text: `${session.name} is online and accepting jobs`, session_id: id });
-    await advanceSession(id, "built", { agent, backend, cited });
-    res.json({ agent, backend, cited });
+    await advanceSession(id, "built", { agent, backend, discovery, mirror });
+    res.json({ agent, backend, discovery, mirror });
   } catch (e) { next(e); }
 });
 
@@ -139,21 +187,27 @@ onboardRouter.get("/:id/live-data", async (req, res, next) => {
 
     const extras = (session as any).extras ?? {};
     const nexlaPreview = (session as any).nexla?.preview ?? extras.nexla?.preview;
-    const tinyfish = (session as any).tinyfish_draft ?? extras.tinyfish_draft;
+    // 1.2 bravo migrated tinyfish_draft → web_extract; 1.3 charlie replaces
+    // cited_url → discovery_url. Keep both legacy keys readable for any
+    // already-running session whose state predates the migration.
+    const extract = (session as any).web_extract ?? extras.web_extract ?? (session as any).tinyfish_draft ?? extras.tinyfish_draft;
 
     // Aggregate the real signal we have, plus a representative fixture so the
     // dashboard always renders something compelling.
-    const machines = tinyfish?.machines ?? (nexlaPreview as any)?.extracted?.machines ?? [
+    const machines = extract?.machines ?? (nexlaPreview as any)?.extracted?.machines ?? [
       { name: "Mazak Integrex i-400", kind: "5-axis mill-turn", envelope: "Ø500 × 1500 mm" },
       { name: "Haas VF-2SS", kind: "3-axis mill", envelope: "762 × 406 × 508 mm" },
       { name: "DMG Mori NHX 5000", kind: "horizontal HMC", envelope: "630 × 630 × 630 mm" },
       { name: "Mori Seiki NL2500", kind: "CNC lathe + Y-axis" },
       { name: "Okuma MU-6300V", kind: "5-axis VMC" }
     ];
-    const materials = tinyfish?.services?.filter?.((s: string) => /Ti-|Inconel|titanium|aluminum/i.test(s)) ?? [
+    const materials = extract?.services?.filter?.((s: string) => /Ti-|Inconel|titanium|aluminum/i.test(s)) ?? [
       "Ti-6Al-4V", "Ti-6Al-4V ELI", "Inconel 625", "Inconel 718", "CP titanium grades 1-4"
     ];
-    const certifications = tinyfish?.certifications ?? ["ISO 9001:2015", "AS9100 Rev D (in progress)", "ITAR registered"];
+    const certifications = extract?.certifications ?? ["ISO 9001:2015", "AS9100 Rev D (in progress)", "ITAR registered"];
+
+    const discovery = (session as any).discovery ?? extras.discovery;
+    const mirror = (session as any).mirror ?? extras.mirror;
 
     res.json({
       session_id: id,
@@ -161,14 +215,15 @@ onboardRouter.get("/:id/live-data", async (req, res, next) => {
       machines,
       materials,
       certifications,
-      hours: tinyfish?.hours ?? "24/7 production · engineering desk 7am–7pm PT",
-      contact: tinyfish?.contact ?? session.contact_email,
+      hours: extract?.hours ?? "24/7 production · engineering desk 7am–7pm PT",
+      contact: extract?.contact ?? session.contact_email,
       // Live customer + jobs counts only available if the InsForge backend is real
       open_jobs: extras.open_jobs ?? 4,
       active_customers: extras.active_customers ?? 4,
       data_source_type: (session as any).nexla?.source_type ?? extras.nexla?.source_type ?? "rest",
       data_source_id: (session as any).nexla?.source_id ?? extras.nexla?.source_id ?? null,
-      cited_url: (session as any).cited?.url ?? extras.cited?.url ?? null,
+      discovery_url: discovery?.discovery_url ?? null,
+      mirror_url_path: mirror?.url_path ?? null,
       agent_url: session.agent?.url ?? null,
       marketplace_url: session.agent?.marketplace_url ?? null
     });

@@ -1,0 +1,16 @@
+{
+  "tree_id": "navi-v2-wave-1",
+  "root_task": "Wave 1 of Navi v2 migration: vendor-free swaps in-place on Navi v1",
+  "leaves": [
+    {"id": "1.1", "description": "Replace Guild SDK with raw Anthropic SDK", "wave": 1, "depends_on": [], "scope": "packages/backend/src/llm-agent.ts (new) · package.json (drop @guildai dep) · archive packages/guild-agent → archive/"},
+    {"id": "1.2", "description": "Replace TinyFish with camoufox + Claude (web-extract.ts)", "wave": 1, "depends_on": [], "scope": "packages/backend/src/tools/web-extract.ts (new) · routes/onboard.ts /scrape (modify) · archive tools/tinyfish.ts"},
+    {"id": "1.3", "description": "Replace Senso/agentic.market with native PCC discovery + GH Pages mirror", "wave": 1, "depends_on": [], "scope": "packages/backend/src/tools/pcc-discovery.ts (new) · routes/onboard.ts build-agent (call PCC discovery) · archive tools/senso.ts"},
+    {"id": "1.4", "description": "Drop CDP paid surface keep viem-only wallet", "wave": 1, "depends_on": [], "scope": "packages/backend/src/tools/cdp-x402.ts (simplify to viem-only) · drop CDP_API_KEY_SECRET requirement"}
+  ],
+  "waves": [
+    {"id": 1, "tasks": ["1.1", "1.2", "1.3", "1.4"], "parallel": true, "isolation": "worktree"}
+  ],
+  "deferred": [
+    {"id": "1.5", "description": "VoiceAdapter abstraction (Vapi-portable)", "reason": "Wave 3 replaces voice entirely with Pipecat; refactoring v1 Vapi code is wasted effort", "wave": 3}
+  ]
+}

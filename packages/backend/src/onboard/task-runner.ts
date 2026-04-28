@@ -10,7 +10,8 @@ import { signupInsforge } from "../tools/insforge.js";
 import { forkGhost } from "../tools/ghost.js";
 import { indexCapability } from "../tools/redis.js";
 import { generateEnterpriseAgent } from "./generate.js";
-import { publishToCited, geoQuestionFor } from "../tools/senso.js";
+import { publishOperator } from "../tools/pcc-discovery.js";
+import { writeOperatorMirror } from "../tools/static-mirror.js";
 
 const VAPI_BASE = process.env.VAPI_BASE_URL ?? "https://api.vapi.ai";
 const VAPI_KEY = process.env.VAPI_PRIVATE_KEY ?? "";
@@ -133,11 +134,12 @@ async function executeTask(t: VapiTask, ctxSessionId: { id: string | null }): Pr
           marketplace_url: session.agent?.marketplace_url,
           contact_email: session.contact_email
         };
-        const cited = await publishToCited({
-          geo_question_id: geoQuestionFor(profile),
-          profile
-        });
-        return { ok: true, result: cited };
+        // Wave 1.3: PCC native discovery (replaces Senso/cited.md) + static SEO mirror.
+        const [discovery, mirror] = await Promise.all([
+          publishOperator(profile),
+          writeOperatorMirror(profile).catch((e) => ({ error: e instanceof Error ? e.message : String(e) }))
+        ]);
+        return { ok: true, result: { discovery, mirror } };
       }
       case "FOLLOW_UP":
         return { ok: true, result: { queued: t.blockingMissingInfo ?? [] } };
